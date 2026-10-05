@@ -22,8 +22,8 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/api/visits') {
-      // Sin base de datos configurada, el sitio muestra solo la base (35.000).
-      if (!env.DB) return json({ error: 'sin base de datos' }, 503);
+      // Sin base de datos configurada, responde 0: el sitio muestra solo la base (35.000) sin errores.
+      if (!env.DB) return json({ n: 0, counting: false });
       await ensure(env.DB);
       if (request.method === 'POST') {
         const row = await env.DB.prepare('UPDATE counter SET n = n + 1 WHERE id = 1 RETURNING n').first<{ n: number }>();
