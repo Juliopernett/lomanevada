@@ -1,0 +1,179 @@
+---
+// Formulario de reserva. La acción principal abre el motor de reservas externo del hotel (hoy Cloudbeds)
+// con fechas y huéspedes ya cargados (disponibilidad y precios reales). Como alternativa,
+// arma un mensaje completo de WhatsApp. Avisa si el grupo no cabe en la cabaña elegida.
+import Icon from './Icon.astro';
+import { BOOK, SITE, STAYS, href, type Lang } from '../data/site';
+
+interface Props { lang: Lang; stay?: string; variant?: 'bar' | 'card' | 'sheet' }
+const { lang, stay = '', variant = 'card' } = Astro.props;
+const uid = `bk-${variant}-${stay || 'all'}`;
+const withStay = variant !== 'bar';
+
+const stays = STAYS.map((s) => ({ key: s.key, name: s.title[lang], cap: s.capacity, url: href(lang, s.slug[lang]) }));
+const cfg = {
+  lang,
+  engine: SITE.bookingEngine.replace('{lang}', lang),
+  phone: SITE.phone.replace('+', ''),
+  nights: BOOK.nights[lang],
+  night: BOOK.night[lang],
+  warn: BOOK.capacityWarn[lang],
+  any: BOOK.anyStay[lang],
+  msg: lang === 'es'
+    ? { hi: 'Hola, quiero consultar disponibilidad en Loma Nevada:', stay: 'Estancia', in: 'Llegada', out: 'Salida', guests: 'Huéspedes', adults: 'adultos', adult: 'adulto', kids: 'niños', kid: 'niño', end: '¿Tienen disponibilidad y cuál sería la tarifa?' }
+    : { hi: 'Hi, I would like to check availability at Loma Nevada:', stay: 'Stay', in: 'Check-in', out: 'Check-out', guests: 'Guests', adults: 'adults', adult: 'adult', kids: 'children', kid: 'child', end: 'Is it available and what would the rate be?' },
+};
+---
+<form class:list={['bk', `bk--${variant}`]} data-booking data-stays={JSON.stringify(stays)} data-cfg={JSON.stringify(cfg)} novalidate>
+  {variant !== 'bar' && <h3 class="bk__title">{BOOK.title[lang]}</h3>}
+  <div class="bk__grid">
+    <label class="bk__f">
+      <span>{BOOK.checkIn[lang]}</span>
+      <input type="date" name="in" required id={`${uid}-in`} />
+    </label>
+    <label class="bk__f">
+      <span>{BOOK.checkOut[lang]}</span>
+      <input type="date" name="out" required id={`${uid}-out`} />
+    </label>
+    <label class="bk__f bk__f--sm">
+      <span>{BOOK.adults[lang]}</span>
+      <select name="adults">{[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <option value={n} selected={n === 2}>{n}</option>)}</select>
+    </label>
+    <label class="bk__f bk__f--sm">
+      <span>{BOOK.kids[lang]}</span>
+      <select name="kids">{[0, 1, 2, 3, 4, 5, 6].map((n) => <option value={n}>{n}</option>)}</select>
+    </label>
+    {withStay && (
+      <label class="bk__f bk__f--stay">
+        <span>{BOOK.stay[lang]}</span>
+        <select name="stay">
+          <option value="">{BOOK.anyStay[lang]}</option>
+          {stays.map((s) => <option value={s.key} selected={s.key === stay}>{s.name} ({s.cap})</option>)}
+        </select>
+      </label>
+    )}
+    <button class="btn bk__submit" type="submit">{BOOK.submit[lang]} <Icon name="arrow" /></button>
+  </div>
+  <div class="bk__foot">
+    <span class="bk__nights"></span>
+    <button type="button" class="bk__wa" data-wa><Icon name="whatsapp" />{BOOK.waAlt[lang]}</button>
+  </div>
+  <p class="bk__warn" hidden aria-live="polite"></p>
+  <p class="bk__kids" hidden>{BOOK.kidsNote[lang]}</p>
+  {variant !== 'bar' && <p class="bk__reply">{BOOK.reply[lang]} {BOOK.secure[lang]}.</p>}
+</form>
+
+<script>
+  type Stay = { key: string; name: string; cap: number; url: string };
+  const iso = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+
+  document.querySelectorAll<HTMLFormElement>('form[data-booking]').forEach((form) => {
+    const stays: Stay[] = JSON.parse(form.dataset.stays!);
+    const t = JSON.parse(form.dataset.cfg!);
+    const $ = <T extends Element>(s: string) => form.querySelector<T>(s);
+    const inEl = $<HTMLInputElement>('[name=in]')!;
+    const outEl = $<HTMLInputElement>('[name=out]')!;
+    const adults = $<HTMLSelectElement>('[name=adults]')!;
+    const kids = $<HTMLSelectElement>('[name=kids]')!;
+    const stay = $<HTMLSelectElement>('[name=stay]');
+    const nightsEl = $<HTMLElement>('.bk__nights')!;
+    const warnEl = $<HTMLElement>('.bk__warn')!;
+    const kidsEl = $<HTMLElement>('.bk__kids')!;
+
+    // Fechas por defecto: mañana → pasado mañana
+    const d1 = new Date(); d1.setDate(d1.getDate() + 1);
+    const d2 = new Date(); d2.setDate(d2.getDate() + 2);
+    inEl.min = iso(new Date());
+    inEl.value = iso(d1);
+    outEl.value = iso(d2);
+
+    const fmt = (v: string) => new Date(v + 'T12:00').toLocaleDateString(t.lang === 'es' ? 'es-CO' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    const nights = () => (inEl.value && outEl.value ? Math.round((+new Date(outEl.value) - +new Date(inEl.value)) / 864e5) : 0);
+
+    const update = () => {
+      if (inEl.value) {
+        const next = new Date(inEl.value + 'T12:00');
+        next.setDate(next.getDate() + 1);
+        outEl.min = iso(next);
+        if (!outEl.value || outEl.value <= inEl.value) outEl.value = iso(next);
+      }
+      const n = nights();
+      nightsEl.textContent = n > 0 ? `${n} ${n === 1 ? t.night : t.nights}` : '';
+      kidsEl.hidden = +kids.value === 0;
+
+      const group = +adults.value + +kids.value;
+      const chosen = stays.find((s) => s.key === stay?.value);
+      if (chosen && group > chosen.cap) {
+        const fits = stays.filter((s) => s.cap >= group).sort((a, b) => a.cap - b.cap);
+        warnEl.hidden = false;
+        warnEl.textContent = t.warn.replace('{n}', String(chosen.cap)) + ' ';
+        fits.forEach((s, i) => {
+          const a = document.createElement('a');
+          a.href = s.url;
+          a.textContent = `${s.name} (${s.cap})`;
+          warnEl.append(a, i < fits.length - 1 ? ', ' : '.');
+        });
+      } else {
+        warnEl.hidden = true;
+      }
+    };
+    [inEl, outEl, adults, kids, stay].forEach((el) => el?.addEventListener('change', update));
+
+    // Acción principal: motor de reservas con fechas y huéspedes cargados
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!inEl.value || !outEl.value) { inEl.focus(); return; }
+      const q = new URLSearchParams({ checkin: inEl.value, checkout: outEl.value, adults: adults.value, kids: kids.value, currency: 'cop' });
+      window.open(`${t.engine}?${q}`, '_blank', 'noopener');
+    });
+
+    // Alternativa: mensaje de WhatsApp con todos los datos
+    $<HTMLButtonElement>('[data-wa]')!.addEventListener('click', () => {
+      const a = +adults.value, k = +kids.value, n = nights();
+      const chosen = stays.find((s) => s.key === stay?.value);
+      const lines = [
+        t.msg.hi,
+        `• ${t.msg.stay}: ${chosen ? chosen.name : t.any}`,
+        `• ${t.msg.in}: ${fmt(inEl.value)}`,
+        `• ${t.msg.out}: ${fmt(outEl.value)} (${n} ${n === 1 ? t.night : t.nights})`,
+        `• ${t.msg.guests}: ${a} ${a === 1 ? t.msg.adult : t.msg.adults}${k ? `, ${k} ${k === 1 ? t.msg.kid : t.msg.kids}` : ''}`,
+        '',
+        t.msg.end,
+      ];
+      window.open(`https://wa.me/${t.phone}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank', 'noopener');
+    });
+    update();
+  });
+</script>
+
+<style>
+  .bk { color: var(--ink); }
+  .bk__title { margin-bottom: 14px; }
+  .bk__grid { display: grid; gap: 12px; }
+  .bk__grid > * { min-width: 0; }
+  .bk__f { display: grid; gap: 5px; font-size: .74rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+  .bk__f input, .bk__f select {
+    font: 500 1rem/1.2 var(--font-body); color: var(--ink); text-transform: none; letter-spacing: 0;
+    padding: 11px 10px; border: 1.5px solid var(--line); border-radius: 10px; background: #fff; width: 100%; min-width: 0; min-height: 48px;
+  }
+  .bk__f input:focus, .bk__f select:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgb(93 111 34 / .15); }
+  .bk__submit { justify-content: center; min-height: 48px; white-space: nowrap; }
+  .bk__submit :global(svg) { width: 18px; height: 18px; }
+  .bk__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; margin-top: 10px; font-size: .9rem; }
+  .bk__nights { font-weight: 600; color: var(--green-dark); }
+  .bk__wa { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 4px 0; min-height: 44px; font: 500 .9rem var(--font-body); color: #0b6b35; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+  .bk__wa :global(svg) { width: 18px; height: 18px; }
+  .bk__warn { background: #fdf3e2; border-left: 3px solid var(--sun); padding: 8px 12px; border-radius: 6px; margin: 10px 0 0; font-size: .9rem; }
+  .bk__warn :global(a) { font-weight: 600; }
+  .bk__kids { color: var(--muted); font-size: .85rem; margin: 8px 0 0; }
+  .bk__reply { font-size: .85rem; color: var(--muted); margin: 12px 0 0; }
+
+  /* Barra horizontal (portada, escritorio) */
+  .bk--bar { background: #fff; border-radius: 18px; padding: 16px 18px 12px; box-shadow: 0 20px 50px -20px rgb(0 0 0 / .45); }
+  .bk--bar .bk__grid { grid-template-columns: 1.2fr 1.2fr .8fr .8fr auto; align-items: end; }
+  @media (max-width: 1080px) { .bk--bar .bk__grid { grid-template-columns: 1fr 1fr 1fr 1fr; } .bk--bar .bk__submit { grid-column: 1 / -1; } }
+
+  /* Tarjeta vertical (página de cabaña) y hoja (celular) */
+  .bk--card .bk__grid, .bk--sheet .bk__grid { grid-template-columns: 1fr 1fr; }
+  .bk--card .bk__f--stay, .bk--card .bk__submit, .bk--sheet .bk__f--stay, .bk--sheet .bk__submit { grid-column: 1 / -1; }
+</style>

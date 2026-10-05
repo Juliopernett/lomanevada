@@ -1,0 +1,75 @@
+---
+// "La vida en Loma Nevada": ambientes en grandes bloques de foto + lo que incluye la estadía.
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import { img } from '../lib/img';
+import { AMBIENTS, SERVICES, WHY, PAGES, UI, href, type Lang } from '../data/site';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const es = lang === 'es';
+const pick = (k: string) => AMBIENTS.find((a) => a.key === k)!;
+const blocks = [
+  { a: pick('piscina'), image: 'ambientes/piscina-2.jpg', text: es ? 'Agua natural de manantial a 1.500 metros, rodeada de montaña.' : 'Natural spring water at 1,500 meters, surrounded by mountains.' },
+  { a: pick('restaurante'), image: 'ambientes/restaurante-1.jpg', text: es ? 'Tres comidas al día con vista de 360° al mar Caribe y la Sierra.' : 'Three meals a day with 360° views of the Caribbean and the Sierra.' },
+  { a: pick('fogata'), image: 'ambientes/fogata-1.jpg', text: es ? 'De noche, la fogata frente a las luces de Santa Marta.' : 'At night, the bonfire facing the lights of Santa Marta.' },
+];
+const pasadia = SERVICES.find((s) => s.key === 'pasadia')!;
+---
+<section class="section section--dark life" aria-labelledby="life-title">
+  <div class="wrap">
+    <header class="life__head reveal">
+      <span class="eyebrow">{UI.ambients[lang]}</span>
+      <h2 id="life-title">{es ? <>La vida en <em>Loma Nevada</em></> : <>Life at <em>Loma Nevada</em></>}</h2>
+    </header>
+
+    <div class="life__grid">
+      {blocks.map((b, i) => (
+        <a class:list={['life__item', `life__item--${i}`]} href={href(lang, b.a.slug[lang])}>
+          <div class="life__img reveal-img">
+            <Image src={img(b.image)} alt={b.a.title[lang]} widths={[480, 800]} sizes="(max-width: 760px) 90vw, 33vw" loading="lazy" />
+          </div>
+          <div class="reveal">
+            <h3>{b.a.title[lang]} <Icon name="arrow" /></h3>
+            <p>{b.text[lang]}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+
+    <div class="life__incl reveal">
+      <span class="eyebrow">{es ? 'Incluido en tu estadía' : 'Included in your stay'}</span>
+      <p>{WHY.map((w, i) => <>{i > 0 && <span class="dot" aria-hidden="true">·</span>}<span>{w.title[lang]}</span></>)}</p>
+    </div>
+
+    <div class="life__more reveal">
+      <a class="link" href={href(lang, PAGES.ambients[lang])}>{es ? 'Todos los ambientes' : 'All spaces'} <Icon name="arrow" /></a>
+      <a class="link" href={href(lang, pasadia.slug[lang])}>{es ? 'Pasadía: ven solo por el día' : 'Day pass: come just for the day'} <Icon name="arrow" /></a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .life__head { max-width: 640px; margin-bottom: clamp(40px, 6vw, 80px); }
+  .life__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(20px, 3vw, 40px); align-items: start; }
+  .life__item { color: inherit; text-decoration: none; }
+  .life__item--1 { margin-top: clamp(40px, 8vw, 120px); }
+  .life__item--2 { margin-top: clamp(20px, 4vw, 56px); }
+  .life__img { overflow: hidden; border-radius: var(--radius); margin-bottom: 18px; }
+  .life__img :global(img) { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; transition: transform 1.2s var(--ease); }
+  .life__item:hover .life__img :global(img) { transform: scale(1.05); }
+  .life__item h3 { display: flex; align-items: center; gap: 10px; color: var(--mist); }
+  .life__item h3 :global(svg) { width: 18px; height: 18px; transition: transform .3s var(--ease); }
+  .life__item:hover h3 :global(svg) { transform: translateX(5px); }
+  .life__item p { color: #b9bfb0; margin: 0; max-width: 34ch; }
+
+  .life__incl { margin-top: clamp(56px, 8vw, 104px); padding-top: 32px; border-top: 1px solid rgb(255 255 255 / .14); }
+  .life__incl p { font: 300 clamp(1.3rem, 2.4vw, 2rem)/1.45 var(--font-head); color: var(--mist); margin: 0; }
+  .life__incl .dot { color: var(--sage); margin: 0 .45em; }
+  .life__more { display: flex; flex-wrap: wrap; gap: 16px 36px; margin-top: 36px; }
+
+  @media (max-width: 760px) {
+    .life__grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; gap: 16px; margin-inline: -16px; padding: 0 16px; scroll-padding-inline: 16px; }
+    .life__item { flex: none; width: 78vw; scroll-snap-align: start; margin: 0 !important; }
+  }
+</style>

@@ -1,0 +1,94 @@
+---
+// Secciones que se repiten al final de varias páginas.
+import Icon from './Icon.astro';
+import Gallery from './Gallery.astro';
+import Cards from './Cards.astro';
+import ContactForm from './ContactForm.astro';
+import { NATURE } from '../lib/img';
+import { BOOK, DISTANCES, PAGES, SERVICES, SITE, UI, UX, href, waLink, type Lang } from '../data/site';
+
+interface Props { lang: Lang; show: ('stays' | 'nature' | 'contact')[]; excludeStay?: string }
+const { lang, show, excludeStay } = Astro.props;
+---
+{show.includes('stays') && (
+  <section class="section section--alt">
+    <div class="wrap">
+      <h2 class="center reveal">{UI.bookOne[lang]}</h2>
+      <p class="lead center">{UI.bookDirect[lang]}: <a href={waLink(UI.waGreeting[lang])} target="_blank" rel="noopener">{SITE.phoneDisplay}</a></p>
+      <div style="margin-top:32px"><Cards lang={lang} kind="stays" exclude={excludeStay} /></div>
+    </div>
+  </section>
+)}
+
+{show.includes('nature') && (
+  <section class="section">
+    <div class="wrap">
+      <h2 class="center reveal">{UI.liveNature[lang]}</h2>
+      <div style="margin-top:28px"><Gallery images={NATURE} alt={UI.liveNature[lang]} lang={lang} /></div>
+    </div>
+  </section>
+)}
+
+{show.includes('contact') && (
+  <section class="section section--alt" id="contacto">
+    <div class="wrap visit">
+      <div>
+        <span class="eyebrow">{UI.contact[lang]}</span>
+        <h2>{UI.visitUs[lang]}</h2>
+        <p class="lead">{UI.visitText[lang]}</p>
+        <ul class="visit__list">
+          <li><Icon name="pin" /><a href={SITE.mapsUrl} target="_blank" rel="noopener">{SITE.address.street}, {lang === 'es' ? 'corregimiento de' : ''} Minca, Magdalena</a></li>
+          <li><Icon name="whatsapp" /><a href={waLink(UI.waGreeting[lang])} target="_blank" rel="noopener">{SITE.phoneDisplay}</a></li>
+          <li><Icon name="mail" /><a href={`mailto:${SITE.email}`}>{SITE.email}</a></li>
+        </ul>
+        <h3 class="dist__title">{UX.howToGet[lang]}</h3>
+        <dl class="dist">
+          {DISTANCES.map((d) => <div><dt>{d.place[lang]}</dt><dd>{d.value[lang]}</dd></div>)}
+        </dl>
+        <p class="dist__note"><a href={href(lang, SERVICES.find((x) => x.key === 'transporte')!.slug[lang])}>{lang === 'es' ? 'Transporte desde Santa Marta y Minca' : 'Transport from Santa Marta and Minca'} <Icon name="arrow" /></a></p>
+        <div class="map" data-map>
+          <button type="button" class="map__load"><Icon name="pin" />{BOOK.mapLoad[lang]}</button>
+        </div>
+        <a class="map__link" href={SITE.mapsUrl} target="_blank" rel="noopener">{UI.openMap[lang]} <Icon name="arrow" /></a>
+      </div>
+      <ContactForm lang={lang} />
+    </div>
+  </section>
+)}
+
+<script>
+  // El mapa de Google solo se carga cuando la persona lo pide.
+  document.querySelectorAll<HTMLElement>('[data-map]').forEach((m) => {
+    m.querySelector('button')?.addEventListener('click', () => {
+      const f = document.createElement('iframe');
+      f.src = 'https://www.google.com/maps?q=Loma+Nevada+Minca+Hotel,+El+Campano,+Minca&output=embed';
+      f.title = 'Google Maps';
+      f.loading = 'lazy';
+      f.referrerPolicy = 'no-referrer-when-downgrade';
+      m.replaceChildren(f);
+    });
+  });
+</script>
+
+<style>
+  .visit { display: grid; gap: 40px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); align-items: start; }
+  .visit__list { list-style: none; padding: 0; margin: 0 0 24px; display: grid; gap: 14px; }
+  .visit__list li { display: flex; gap: 12px; align-items: flex-start; }
+  .visit__list :global(svg) { width: 22px; height: 22px; color: var(--green); flex: none; margin-top: 2px; }
+  .visit__list a { color: var(--ink); text-decoration: none; }
+  .visit__list a:hover { text-decoration: underline; }
+  .dist__title { font-size: 1.15rem; margin: 8px 0 10px; }
+  .dist { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 0; }
+  .dist div { background: var(--cream); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .dist dt { font-size: .8rem; color: var(--muted); }
+  .dist dd { margin: 2px 0 0; font-weight: 600; color: var(--brown); font-size: .95rem; }
+  .dist__note { margin: 10px 0 16px; font-size: .92rem; }
+  .dist__note a { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+  .dist__note :global(svg) { width: 16px; height: 16px; }
+  .map { position: relative; aspect-ratio: 16 / 10; border-radius: var(--radius); overflow: hidden; background: linear-gradient(135deg, #dfe6c8, #c8d3a4); display: grid; place-items: center; }
+  .map :global(iframe) { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .map__load { display: inline-flex; align-items: center; gap: 8px; font: 600 1rem var(--font-body); padding: 14px 22px; border-radius: 999px; border: 0; background: #fff; color: var(--green-dark); cursor: pointer; box-shadow: var(--shadow); }
+  .map__load :global(svg) { width: 20px; height: 20px; }
+  .map__link { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; font-weight: 600; font-size: .92rem; }
+  .map__link :global(svg) { width: 16px; height: 16px; }
+</style>

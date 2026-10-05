@@ -1,0 +1,121 @@
+---
+// Cabañas en la portada: una destacada en grande + el resto en un carril horizontal.
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import { img } from '../lib/img';
+import { STAYS, UI, UX, BOOK, href, type Lang, type Stay } from '../data/site';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const es = lang === 'es';
+const bath = { private: { es: 'baño privado', en: 'private bathroom' }, shared: { es: 'baño compartido', en: 'shared bathroom' } };
+const money = (n: number) => `$${n.toLocaleString('es-CO')}`;
+const meta = (s: Stay) => `${s.capacity} ${UI.people[lang]} · ${s.area} m² · ${bath[s.bath][lang]}`;
+
+const featured = STAYS.find((s) => s.key === 'elite')!;
+const rest = STAYS.filter((s) => s !== featured);
+---
+<section class="section stays" id="cabanas" aria-labelledby="stays-title">
+  <div class="wrap">
+    <header class="stays__head">
+      <div class="reveal">
+        <span class="eyebrow">{es ? `${STAYS.length} estancias` : `${STAYS.length} stays`}</span>
+        <h2 id="stays-title">{es ? <>Siete formas de <em>despertar sobre las nubes</em></> : <>Seven ways to <em>wake up above the clouds</em></>}</h2>
+      </div>
+      <p class="lead reveal">{es ? 'Cabañas en madera de pino reforestado, todas con vista. Incluyen café orgánico, agua de manantial y acceso a piscina, restaurante, bar y fogata.' : 'Cabins in reforested pine, all with a view. Organic coffee, spring water and access to the pool, restaurant, bar and bonfire included.'}</p>
+    </header>
+
+    <article class="feat">
+      <a class="feat__img reveal-img" href={href(lang, featured.slug[lang])} tabindex="-1" aria-hidden="true">
+        <Image src={img(featured.images[0])} alt="" widths={[640, 960, 1280]} sizes="(max-width: 900px) 100vw, 62vw" loading="lazy" />
+      </a>
+      <div class="feat__body reveal">
+        <span class="meta">{BOOK.tagSea[lang]} · {meta(featured)}</span>
+        <h3><a href={href(lang, featured.slug[lang])}>{featured.title[lang]}</a></h3>
+        <p>{es ? 'La única cabaña con vista a la ciudad de Santa Marta y al mar Caribe. Cama doble, baño privado y balcón.' : 'The only cabin overlooking the city of Santa Marta and the Caribbean Sea. Double bed, private bathroom and a balcony.'}</p>
+        {featured.priceFrom && <p class="price"><span>{UX.from[lang]}</span> {money(featured.priceFrom)} / {UX.perNight[lang]}</p>}
+        <div class="actions">
+          <button type="button" class="btn" data-open-booking data-stay={featured.key}>{UX.reserveNow[lang]}</button>
+          <a class="link" href={href(lang, featured.slug[lang])}>{UX.viewCabin[lang]} <Icon name="arrow" /></a>
+        </div>
+      </div>
+    </article>
+
+    <div class="rail-head">
+      <span class="meta">{es ? 'Más estancias' : 'More stays'}</span>
+      <div class="rail-nav" aria-hidden="true">
+        <button type="button" data-rail="-1" tabindex="-1">‹</button>
+        <button type="button" data-rail="1" tabindex="-1">›</button>
+      </div>
+    </div>
+    <div class="rail stays__rail" data-rail-track>
+      {rest.map((s) => (
+        <article class="sc">
+          <a class="sc__img" href={href(lang, s.slug[lang])} tabindex="-1" aria-hidden="true">
+            <Image src={img(s.images[0])} alt="" widths={[400, 640]} sizes="(max-width: 700px) 78vw, 340px" loading="lazy" />
+            {s.capacity >= 6 && <span class="sc__tag">{BOOK.tagFamily[lang]}</span>}
+          </a>
+          <span class="meta">{meta(s)}</span>
+          <h3><a href={href(lang, s.slug[lang])}>{s.title[lang]}</a></h3>
+          {s.priceFrom && <p class="price"><span>{UX.from[lang]}</span> {money(s.priceFrom)} / {UX.perNight[lang]}</p>}
+          <div class="sc__actions">
+            <a class="link" href={href(lang, s.slug[lang])}>{UX.viewCabin[lang]} <Icon name="arrow" /></a>
+            <button type="button" class="sc__book" data-open-booking data-stay={s.key}>{BOOK.reserve[lang]}</button>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-rail-track]').forEach((track) => {
+    const nav = track.previousElementSibling;
+    nav?.querySelectorAll<HTMLButtonElement>('[data-rail]').forEach((b) =>
+      b.addEventListener('click', () => track.scrollBy({ left: Number(b.dataset.rail) * track.clientWidth * 0.8, behavior: 'smooth' })),
+    );
+  });
+</script>
+
+<style>
+  .stays__head { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px 64px; align-items: end; margin-bottom: clamp(40px, 6vw, 72px); }
+  .stays__head h2 { margin: 0; }
+  .stays__head .lead { margin: 0; }
+
+  .feat { display: grid; grid-template-columns: 1.6fr 1fr; gap: clamp(24px, 5vw, 72px); align-items: center; }
+  .feat__img { display: block; overflow: hidden; border-radius: var(--radius); }
+  .feat__img :global(img) { width: 100%; aspect-ratio: 16 / 11; object-fit: cover; transition: transform 1.2s var(--ease); }
+  .feat:hover .feat__img :global(img) { transform: scale(1.03); }
+  .feat__body h3 { font-size: clamp(2rem, 3.6vw, 3rem); margin: .2em 0 .4em; }
+  .feat__body h3 a, .sc h3 a { color: inherit; text-decoration: none; }
+  .feat__body p { color: var(--muted); }
+  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; margin-top: 1.6rem; }
+  .price { color: var(--muted); font-size: .9rem; }
+  .price span { font: 600 .7rem var(--font-body); letter-spacing: .16em; text-transform: uppercase; }
+
+  .rail-head { display: flex; justify-content: space-between; align-items: center; margin: clamp(56px, 8vw, 96px) 0 20px; border-top: 1px solid var(--line); padding-top: 20px; }
+  .rail-head .meta { margin: 0; }
+  .rail-nav { display: flex; gap: 8px; }
+  .rail-nav button { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: none; font-size: 1.4rem; line-height: 1; color: var(--forest); cursor: pointer; transition: background .25s, color .25s; }
+  .rail-nav button:hover { background: var(--forest); color: var(--mist); }
+  .stays__rail { gap: 28px; }
+  .sc { width: 340px; }
+  .sc__img { display: block; position: relative; overflow: hidden; border-radius: var(--radius); margin-bottom: 16px; }
+  .sc__img :global(img) { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; transition: transform 1s var(--ease); }
+  .sc:hover .sc__img :global(img) { transform: scale(1.04); }
+  .sc__tag { position: absolute; left: 12px; top: 12px; background: var(--paper); color: var(--forest); font: 600 .75rem var(--font-body); letter-spacing: .12em; text-transform: uppercase; padding: 6px 10px; border-radius: 999px; }
+  .sc .meta { margin-bottom: .5rem; color: var(--muted); letter-spacing: .12em; }
+  .sc h3 { margin: 0 0 .6rem; }
+  .sc h3 a { display: inline-block; padding: 8px 0; }
+  .sc__actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .sc__book { background: none; border: 0; padding: 10px 0; min-height: 44px; font: 600 .95rem var(--font-body); color: var(--amber-dark); cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+  .sc__book:hover { color: var(--amber-dark); }
+
+  @media (max-width: 900px) {
+    .stays__head, .feat { grid-template-columns: 1fr; }
+    .feat__img :global(img) { aspect-ratio: 4 / 3; }
+    .rail-nav { display: none; }
+    .stays__rail { margin-inline: -16px; padding-inline: 16px; scroll-padding-inline: 16px; gap: 16px; }
+    .sc { width: 78vw; max-width: 340px; }
+  }
+</style>

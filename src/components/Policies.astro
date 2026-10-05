@@ -1,0 +1,42 @@
+---
+// "Antes de reservar": políticas reales del hotel en una lista tipográfica limpia.
+import Icon from './Icon.astro';
+import { POLICIES, PAGES, UI, UX, href, type Lang } from '../data/site';
+
+interface Props { lang: Lang; compact?: boolean }
+const { lang, compact = false } = Astro.props;
+const id = `pol-${compact ? 'c' : 'h'}`;
+---
+<section class:list={['pol', compact ? 'pol--compact' : 'section']} aria-labelledby={id}>
+  <div class:list={[!compact && 'wrap', 'pol__in']}>
+    <header class="pol__head reveal">
+      {!compact && <span class="eyebrow">{UI.faq[lang]}</span>}
+      <h2 id={id}>{UX.policiesTitle[lang]}</h2>
+      <a class="link" href={href(lang, PAGES.faq[lang])}>{lang === 'es' ? 'Todas las preguntas' : 'All questions'} <Icon name="arrow" /></a>
+    </header>
+    <dl class="pol__list">
+      {POLICIES.map((p) => (
+        <div class="reveal">
+          <dt>{p.title[lang]}</dt>
+          <dd>{p.text[lang]}</dd>
+        </div>
+      ))}
+    </dl>
+  </div>
+</section>
+
+<style>
+  .pol__in { display: grid; grid-template-columns: 1fr 2fr; gap: 32px clamp(32px, 6vw, 96px); }
+  .pol__head h2 { margin-bottom: .6em; }
+  .pol__list { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0 clamp(24px, 4vw, 56px); }
+  .pol__list div { padding: 20px 0; border-top: 1px solid var(--line); }
+  .pol__list dt { font: 400 1.25rem/1.3 var(--font-head); color: var(--forest); margin-bottom: 6px; }
+  .pol__list dd { margin: 0; color: var(--muted); font-size: .95rem; }
+
+  .pol--compact .pol__in { grid-template-columns: 1fr; gap: 12px; }
+  .pol--compact h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
+
+  @media (max-width: 900px) {
+    .pol__in, .pol__list { grid-template-columns: 1fr; }
+  }
+</style>

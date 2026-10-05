@@ -1,0 +1,11 @@
+# Configuración de Cloudflare Pages
+name = "lomanevada"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-10-01"
+
+# Base de datos del contador de visitas.
+# Crear con: npx wrangler d1 create lomanevada-visitas  → pegar aquí el database_id que devuelve.
+[[d1_databases]]
+binding = "DB"
+database_name = "lomanevada-visitas"
+database_id = "PENDIENTE"

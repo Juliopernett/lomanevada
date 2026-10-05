@@ -1,0 +1,15 @@
+---
+import { href, type Lang } from '../data/site';
+
+interface Props { lang: Lang; title: string; parent?: { label: string; href?: string }; lead?: string }
+const { lang, title, parent, lead } = Astro.props;
+---
+<header class="page-head wrap">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href={href(lang, '')}>{lang === 'es' ? 'Inicio' : 'Home'}</a>
+    {parent && <> / {parent.href ? <a href={parent.href}>{parent.label}</a> : <span>{parent.label}</span>}</>}
+  </nav>
+  <h1>{title}</h1>
+  {lead && <p class="lead">{lead}</p>}
+  <slot />
+</header>

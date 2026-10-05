@@ -1,0 +1,32 @@
+---
+import PageHead from '../components/PageHead.astro';
+import Gallery from '../components/Gallery.astro';
+import Cards from '../components/Cards.astro';
+import Sections from '../components/Sections.astro';
+import { PAGES, UI, href, type Lang, type Ambient } from '../data/site';
+
+interface Props { lang: Lang; ambient?: Ambient }
+const { lang, ambient } = Astro.props;
+const es = lang === 'es';
+---
+{ambient ? (
+  <>
+    <PageHead lang={lang} title={ambient.title[lang]} parent={{ label: UI.ambients[lang], href: href(lang, PAGES.ambients[lang]) }} lead={ambient.text[lang]} />
+    <div class="wrap"><Gallery images={ambient.images} alt={ambient.title[lang]} lang={lang} variant={ambient.images.length > 2 ? 'feature' : 'grid'} /></div>
+    <section class="section">
+      <div class="wrap">
+        <h2>{es ? 'Otros ambientes' : 'Other spaces'}</h2>
+        <div style="margin-top:24px"><Cards lang={lang} kind="ambients" exclude={ambient.key} /></div>
+      </div>
+    </section>
+    <Sections lang={lang} show={['stays']} />
+  </>
+) : (
+  <>
+    <PageHead lang={lang} title={UI.ambients[lang]} lead={es ? 'Restaurante, bar, piscina, gimnasio, fogata y más, todo a 1.500 metros de altura con vista al mar Caribe.' : 'Restaurant, bar, pool, gym, bonfire and more, all 1,500 meters high overlooking the Caribbean Sea.'} />
+    <section class="section" style="padding-top:24px">
+      <div class="wrap"><Cards lang={lang} kind="ambients" /></div>
+    </section>
+    <Sections lang={lang} show={['stays', 'nature']} />
+  </>
+)}

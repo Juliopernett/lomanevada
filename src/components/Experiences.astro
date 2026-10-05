@@ -1,0 +1,78 @@
+---
+// Experiencias: un panorama a todo el ancho y una composición asimétrica (carril en móvil).
+import { Image } from 'astro:assets';
+import { img } from '../lib/img';
+import { EXPERIENCES, BOOK, type Lang } from '../data/site';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const es = lang === 'es';
+const [hero, ...rest] = EXPERIENCES;
+---
+<section class="xp" id="experiencias" aria-labelledby="xp-title">
+  <figure class="xp__pano">
+    <Image src={img(hero.image)} alt={hero.title[lang]} widths={[768, 1200]} sizes="100vw" loading="lazy" data-parallax="0.06" />
+    <figcaption class="wrap">
+      <span class="eyebrow">{BOOK.experiences[lang]}</span>
+      <h2 id="xp-title">{es ? <>El <em>atardecer</em> se ve desde arriba</> : <>The <em>sunset</em> is seen from above</>}</h2>
+      <p>{hero.text[lang]}</p>
+    </figcaption>
+  </figure>
+
+  <div class="wrap">
+    <div class="xp__grid rail-m">
+      {rest.map((x, i) => (
+        <article class:list={['xp__item', `xp__item--${i}`]}>
+          <div class="xp__img reveal-img">
+            <Image src={img(x.image)} alt={x.title[lang]} widths={[480, 800]} sizes="(max-width: 760px) 80vw, 40vw" loading="lazy" />
+          </div>
+          <div class="xp__txt reveal">
+            <span class="xp__n">0{i + 2}</span>
+            <h3>{x.title[lang]}</h3>
+            <p>{x.text[lang]}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .xp { padding-bottom: clamp(64px, 10vw, 140px); }
+  .xp__pano { position: relative; margin: 0; height: min(86vh, 820px); overflow: hidden; color: #fff; display: flex; align-items: flex-end; }
+  .xp__pano :global(img) { position: absolute; inset: -8% 0; width: 100%; height: 116%; object-fit: cover; z-index: -1; will-change: transform; }
+  .xp__pano::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, transparent 40%, rgb(10 16 12 / .78)); }
+  .xp__pano { isolation: isolate; }
+  .xp__pano figcaption { padding-bottom: clamp(40px, 7vw, 88px); text-shadow: 0 1px 2px rgb(0 0 0 / .35), 0 2px 18px rgb(0 0 0 / .35); }
+  .xp__pano .eyebrow { color: #f1d9b0; }
+  .xp__pano h2 { color: #fff; max-width: 14ch; font-weight: 300; }
+  .xp__pano p { max-width: 46ch; font-size: 1.08rem; opacity: .92; margin: 0; }
+
+  .xp__grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: clamp(28px, 4vw, 56px) clamp(16px, 3vw, 40px); margin-top: clamp(64px, 9vw, 120px); }
+  .xp__item { margin: 0; }
+  .xp__img { overflow: hidden; border-radius: var(--radius); }
+  .xp__img :global(img) { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--ease); }
+  .xp__item:hover .xp__img :global(img) { transform: scale(1.04); }
+  .xp__txt { padding-top: 18px; max-width: 36ch; }
+  .xp__n { font: 300 .95rem var(--font-head); font-style: italic; color: var(--wood); }
+  .xp__txt h3 { margin: .2em 0 .35em; }
+  .xp__txt p { color: var(--muted); margin: 0; font-size: .97rem; }
+  /* Composición asimétrica: tamaños y alturas distintas */
+  .xp__item--0 { grid-column: 1 / span 5; }
+  .xp__item--0 .xp__img { aspect-ratio: 4 / 5; }
+  .xp__item--1 { grid-column: 7 / span 6; margin-top: 18vh; }
+  .xp__item--1 .xp__img { aspect-ratio: 3 / 2; }
+  .xp__item--2 { grid-column: 2 / span 6; }
+  .xp__item--2 .xp__img { aspect-ratio: 16 / 10; }
+  .xp__item--3 { grid-column: 9 / span 4; margin-top: 10vh; }
+  .xp__item--3 .xp__img { aspect-ratio: 3 / 4; }
+  .xp__item--4 { grid-column: 4 / span 6; }
+  .xp__item--4 .xp__img { aspect-ratio: 21 / 9; }
+
+  @media (max-width: 760px) {
+    .xp__pano { height: 78vh; }
+    .xp__grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; gap: 16px; margin-inline: -16px; padding: 0 16px; scroll-padding-inline: 16px; }
+    .xp__item { flex: none; width: 78vw; scroll-snap-align: start; margin: 0 !important; }
+    .xp__item .xp__img { aspect-ratio: 4 / 5 !important; }
+  }
+</style>

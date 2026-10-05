@@ -1,0 +1,361 @@
+---
+import '../styles/global.css';
+import { getImage } from 'astro:assets';
+import Icon from '../components/Icon.astro';
+import BookingForm from '../components/BookingForm.astro';
+import { SITE, UI, UX, BOOK, STAYS, AMBIENTS, SERVICES, PAGES, href, waLink, type Lang } from '../data/site';
+import { img } from '../lib/img';
+
+interface Props {
+  lang: Lang;
+  title: string;
+  description: string;
+  /** Ruta de esta misma página en el otro idioma. */
+  alt: string;
+  image?: string;
+  waText?: string;
+  /** Estancia preseleccionada en el formulario de reserva. */
+  stay?: string;
+  /** Encabezado transparente sobre una foto a pantalla completa (portada). */
+  overlay?: boolean;
+}
+
+const { lang, title, description, alt, image = 'hero/hero-1.jpg', waText, stay, overlay = false } = Astro.props;
+const other: Lang = lang === 'es' ? 'en' : 'es';
+const canonical = new URL(Astro.url.pathname, SITE.url).href;
+const altUrl = new URL(alt, SITE.url).href;
+const esUrl = lang === 'es' ? canonical : altUrl;
+const enUrl = lang === 'en' ? canonical : altUrl;
+const og = await getImage({ src: img(image), width: 1200, format: 'jpg' });
+const fullTitle = title === SITE.name ? title : `${title} | ${SITE.name}`;
+const wa = waLink(waText ?? UI.waGreeting[lang]);
+const logo = await getImage({ src: img('brand/logo.png'), format: 'png' });
+// Precarga de la foto del hero en la portada (mejora el LCP).
+const heroPre = overlay ? await getImage({ src: img('hero/hero-1.jpg'), widths: [640, 960, 1200], format: 'webp' }) : null;
+
+const home = href(lang, '');
+const es = lang === 'es';
+const quick = [
+  { label: es ? 'Cabañas' : 'Cabins', href: `${home}#cabanas` },
+  { label: es ? 'Experiencias' : 'Experiences', href: `${home}#experiencias` },
+  { label: es ? 'Ubicación' : 'Location', href: `${home}#ubicacion` },
+];
+const menu = [
+  { label: UI.stays[lang], items: STAYS.map((s) => ({ label: s.title[lang], href: href(lang, s.slug[lang]), note: `${s.capacity} ${UI.people[lang]}` })) },
+  { label: UI.ambients[lang], items: AMBIENTS.map((a) => ({ label: a.title[lang], href: href(lang, a.slug[lang]), note: '' })) },
+  { label: UI.services[lang], items: SERVICES.map((s) => ({ label: s.title[lang], href: href(lang, s.slug[lang]), note: '' })) },
+  {
+    label: es ? 'Información' : 'Information',
+    items: [
+      { label: UI.faq[lang], href: href(lang, PAGES.faq[lang]), note: '' },
+      { label: UI.contact[lang], href: href(lang, PAGES.contact[lang]), note: '' },
+      { label: UI.privacy[lang], href: href(lang, PAGES.privacy[lang]), note: '' },
+    ],
+  },
+];
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Hotel',
+  name: SITE.name,
+  url: SITE.url,
+  image: new URL(og.src, SITE.url).href,
+  telephone: SITE.phone,
+  email: SITE.email,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: SITE.address.street,
+    addressLocality: SITE.address.locality,
+    addressRegion: SITE.address.region,
+    addressCountry: SITE.address.country,
+  },
+  hasMap: SITE.mapsUrl,
+  checkinTime: '15:00',
+  checkoutTime: '12:00',
+  petsAllowed: true,
+  amenityFeature: ['Pool', 'Restaurant', 'Bar', 'Gym', 'Free WiFi', 'Free parking'].map((name) => ({ '@type': 'LocationFeatureSpecification', name, value: true })),
+  sameAs: [SITE.instagram, SITE.facebook],
+};
+---
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="es" href={esUrl} />
+    <link rel="alternate" hreflang="en" href={enUrl} />
+    <link rel="alternate" hreflang="x-default" href={enUrl} />
+    <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#16221b" />
+    {heroPre && <link rel="preload" as="image" imagesrcset={heroPre.srcSet.attribute} imagesizes="100vw" fetchpriority="high" />}
+    <script is:inline>document.documentElement.classList.add('js')</script>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL(og.src, SITE.url).href} />
+    <meta property="og:locale" content={es ? 'es_CO' : 'en_US'} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  </head>
+  <body class:list={[overlay && 'has-overlay']}>
+    <a class="skip" href="#main">{es ? 'Saltar al contenido' : 'Skip to content'}</a>
+
+    <header class:list={['hdr', overlay ? 'hdr--overlay' : 'is-solid']} data-hdr>
+      <div class="hdr__in">
+        <a href={home} class="hdr__logo" aria-label={SITE.name}>
+          <img src={logo.src} width="150" height="61" alt={SITE.name} />
+        </a>
+        <nav class="hdr__quick" aria-label={es ? 'Secciones' : 'Sections'}>
+          {quick.map((q) => <a href={q.href}>{q.label}</a>)}
+        </nav>
+        <div class="hdr__right">
+          <a class="hdr__lang" href={alt} hreflang={other} lang={other} aria-label={other === 'es' ? 'Ver en español' : 'View in English'}>{other.toUpperCase()}</a>
+          <button type="button" class="btn hdr__book" data-open-booking>{UX.reserveNow[lang]}</button>
+          <button type="button" class="hdr__menu" data-open-menu aria-haspopup="dialog" aria-controls="site-menu" aria-label={UI.menu[lang]}>
+            <span class="hdr__menu-txt">{UI.menu[lang]}</span>
+            <span class="hdr__burger" aria-hidden="true"><i></i><i></i></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <dialog class="menu" id="site-menu" aria-label={UI.menu[lang]}>
+      <div class="menu__top">
+        <img src={logo.src} width="130" height="53" alt="" />
+        <button type="button" class="menu__close" data-close-menu aria-label={UI.close[lang]}><Icon name="close" /></button>
+      </div>
+      <nav class="menu__grid">
+        {menu.map((g) => (
+          <div class="menu__col">
+            <span class="meta">{g.label}</span>
+            <ul>
+              {g.items.map((i) => <li><a href={i.href} aria-current={Astro.url.pathname === i.href ? 'page' : undefined}>{i.label}{i.note && <small>{i.note}</small>}</a></li>)}
+            </ul>
+          </div>
+        ))}
+      </nav>
+      <div class="menu__foot">
+        <button type="button" class="btn" data-open-booking>{UX.reserveNow[lang]}</button>
+        <a class="btn btn--light" href={wa} target="_blank" rel="noopener"><Icon name="whatsapp" />WhatsApp</a>
+        <a class="menu__lang" href={alt} hreflang={other} lang={other}>{other === 'es' ? 'Español' : 'English'}</a>
+      </div>
+    </dialog>
+
+    <main id="main"><slot /></main>
+
+    <footer class="ftr">
+      <div class="wrap">
+        <div class="ftr__claim">
+          <p class="ftr__big">{es ? <>Duerme <em>sobre las nubes.</em></> : <>Sleep <em>above the clouds.</em></>}</p>
+          <button type="button" class="btn" data-open-booking>{UX.reserveNow[lang]}</button>
+        </div>
+        <div class="ftr__grid">
+          <div>
+            <span class="meta">{UI.contact[lang]}</span>
+            <ul>
+              <li><a href={SITE.mapsUrl} target="_blank" rel="noopener">{SITE.address.street}<br />Minca, Santa Marta, Magdalena</a></li>
+              <li><a href={wa} target="_blank" rel="noopener">WhatsApp {SITE.phoneDisplay}</a></li>
+              <li><a href={`mailto:${SITE.email}`}>{SITE.email}</a></li>
+            </ul>
+          </div>
+          <div>
+            <span class="meta">{UI.stays[lang]}</span>
+            <ul>{STAYS.map((s) => <li><a href={href(lang, s.slug[lang])}>{s.title[lang]}</a></li>)}</ul>
+          </div>
+          <div>
+            <span class="meta">{UI.services[lang]}</span>
+            <ul>{SERVICES.map((s) => <li><a href={href(lang, s.slug[lang])}>{s.title[lang]}</a></li>)}</ul>
+          </div>
+          <div>
+            <span class="meta">{es ? 'Información' : 'Information'}</span>
+            <ul>
+              <li><a href={href(lang, PAGES.faq[lang])}>{UI.faq[lang]}</a></li>
+              <li><a href={href(lang, PAGES.privacy[lang])}>{UI.privacy[lang]}</a></li>
+              <li><a href={SITE.instagram} target="_blank" rel="noopener">Instagram</a> · <a href={SITE.facebook} target="_blank" rel="noopener">Facebook</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="ftr__bottom">
+          <span>© {new Date().getFullYear()} {SITE.name}{SITE.rnt && <> · {UX.rnt[lang]} {SITE.rnt}</>}</span>
+          <span class="visits" data-visits data-base={SITE.visitsBase} data-locale={es ? 'es-CO' : 'en-US'}><Icon name="eye" /><strong>{SITE.visitsBase.toLocaleString(es ? 'es-CO' : 'en-US')}</strong> {BOOK.visits[lang]}</span>
+        </div>
+      </div>
+    </footer>
+
+    <a class="wa-float" href={wa} target="_blank" rel="noopener" aria-label={UI.bookWa[lang]}><Icon name="whatsapp" /></a>
+
+    <div class="mbar">
+      <a class="mbar__wa" href={wa} target="_blank" rel="noopener" aria-label={UI.bookWa[lang]}><Icon name="whatsapp" /></a>
+      <button type="button" class="btn mbar__book" data-open-booking>{UX.reserveNow[lang]}</button>
+    </div>
+
+    <dialog class="sheet" id="booking-sheet" aria-label={BOOK.title[lang]}>
+      <button type="button" class="sheet__close" aria-label={UI.close[lang]} data-close-booking><Icon name="close" /></button>
+      <BookingForm lang={lang} variant="sheet" stay={stay} />
+    </dialog>
+
+    <script>
+      const hdr = document.querySelector<HTMLElement>('[data-hdr]');
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // Encabezado: transparente sobre el hero, sólido al hacer scroll.
+      if (hdr?.classList.contains('hdr--overlay')) {
+        const onScroll = () => hdr.classList.toggle('is-solid', scrollY > 40);
+        onScroll();
+        addEventListener('scroll', onScroll, { passive: true });
+      }
+
+      // Menú a pantalla completa.
+      const menu = document.getElementById('site-menu') as HTMLDialogElement | null;
+      document.querySelectorAll('[data-open-menu]').forEach((b) => b.addEventListener('click', () => menu?.showModal()));
+      menu?.querySelector('[data-close-menu]')?.addEventListener('click', () => menu.close());
+      menu?.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => menu.close()));
+
+      // Hoja de reserva: la abre cualquier botón "Reservar"; si trae data-stay, preselecciona la cabaña.
+      const sheet = document.getElementById('booking-sheet') as HTMLDialogElement | null;
+      document.querySelectorAll<HTMLElement>('[data-open-booking]').forEach((b) => b.addEventListener('click', () => {
+        const sel = sheet?.querySelector<HTMLSelectElement>('select[name=stay]');
+        if (sel && b.dataset.stay !== undefined) { sel.value = b.dataset.stay; sel.dispatchEvent(new Event('change')); }
+        menu?.close();
+        sheet?.showModal();
+      }));
+      sheet?.querySelector('[data-close-booking]')?.addEventListener('click', () => sheet.close());
+      [sheet, menu].forEach((d) => d?.addEventListener('click', (e) => { if (e.target === d) d.close(); }));
+
+      // Aparición suave al hacer scroll.
+      const io = new IntersectionObserver((entries) => entries.forEach((en) => {
+        if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); }
+      }), { rootMargin: '0px 0px -10% 0px' });
+      document.querySelectorAll('.reveal, .reveal-img').forEach((el) => io.observe(el));
+
+      // Parallax muy sutil en imágenes marcadas con data-parallax (solo escritorio).
+      const px = [...document.querySelectorAll<HTMLElement>('[data-parallax]')];
+      if (px.length && !reduce && matchMedia('(min-width: 900px)').matches) {
+        let ticking = false;
+        const run = () => {
+          px.forEach((el) => {
+            const r = el.getBoundingClientRect();
+            const k = Number(el.dataset.parallax) || 0.08;
+            el.style.transform = `translate3d(0, ${((r.top + r.height / 2 - innerHeight / 2) * -k).toFixed(1)}px, 0)`;
+          });
+          ticking = false;
+        };
+        addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(run); } }, { passive: true });
+        run();
+      }
+
+      // Contador de visitas: base + visitas reales (una por sesión). Sin servidor, queda la base.
+      const vc = document.querySelector<HTMLElement>('[data-visits]');
+      if (vc) {
+        const out = vc.querySelector('strong')!;
+        const base = Number(vc.dataset.base);
+        const loc = vc.dataset.locale!;
+        let counted = false;
+        try { counted = sessionStorage.getItem('ln-visit') === '1'; } catch {}
+        fetch('/api/visits', { method: counted ? 'GET' : 'POST' })
+          .then((r) => (r.ok ? r.json() : Promise.reject()))
+          .then(({ n }) => {
+            try { sessionStorage.setItem('ln-visit', '1'); } catch {}
+            out.textContent = (base + Number(n)).toLocaleString(loc);
+          })
+          .catch(() => {});
+      }
+    </script>
+  </body>
+</html>
+
+<style>
+  /* ---------- Encabezado ---------- */
+  .hdr { position: sticky; top: 0; z-index: 50; color: var(--forest); transition: background .4s, box-shadow .4s, color .4s; }
+  .hdr--overlay { position: fixed; left: 0; right: 0; color: #fff; }
+  .hdr--overlay:not(.is-solid) .hdr__quick, .hdr--overlay:not(.is-solid) .hdr__lang, .hdr--overlay:not(.is-solid) .hdr__menu { text-shadow: 0 1px 2px rgb(0 0 0 / .35), 0 2px 18px rgb(0 0 0 / .35); filter: drop-shadow(0 1px 6px rgb(0 0 0 / .3)); }
+  .hdr.is-solid { background: rgb(243 240 232 / .96); color: var(--forest); box-shadow: 0 1px 0 var(--line); backdrop-filter: saturate(1.4) blur(10px); }
+  .hdr__in { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; height: 76px; padding: 0 clamp(16px, 3vw, 40px); }
+  .hdr__logo img { width: 128px; height: auto; transition: width .4s; }
+  .hdr__quick { display: flex; gap: 34px; }
+  .hdr__quick a { color: inherit; text-decoration: none; font-size: .82rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; position: relative; padding: 6px 0; }
+  .hdr__quick a::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform .35s var(--ease); }
+  .hdr__quick a:hover::after { transform: scaleX(1); }
+  .hdr__right { display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
+  .hdr__lang { color: inherit; text-decoration: none; font-size: .8rem; font-weight: 700; letter-spacing: .14em; min-width: 44px; min-height: 44px; display: inline-grid; place-items: center; }
+  .hdr__book { min-height: 42px; padding: .7em 1.3em; font-size: .85rem; }
+  .hdr__menu { display: inline-flex; align-items: center; gap: 10px; background: none; border: 0; color: inherit; cursor: pointer; font: 600 .78rem var(--font-body); letter-spacing: .14em; text-transform: uppercase; padding: 10px 2px; min-height: 44px; min-width: 44px; justify-content: center; }
+  .hdr__burger { display: grid; gap: 6px; width: 24px; }
+  .hdr__burger i { display: block; height: 1.5px; background: currentColor; }
+  .hdr__burger i:last-child { width: 16px; justify-self: end; }
+  @media (max-width: 1020px) { .hdr__quick { display: none; } .hdr__in { grid-template-columns: auto 1fr; } }
+  @media (max-width: 640px) {
+    .hdr__in { height: 64px; }
+    .hdr__logo img { width: 104px; }
+    .hdr__book, .hdr__menu-txt { display: none; }
+    .hdr__lang { font-size: .8rem; }
+  }
+
+  /* ---------- Menú a pantalla completa ---------- */
+  .menu { border: 0; padding: 0; margin: 0; width: 100%; height: 100%; max-width: 100%; max-height: 100%; background: var(--forest); color: var(--mist); overflow-y: auto; }
+  .menu[open] { display: flex; flex-direction: column; animation: fade .35s var(--ease); }
+  @keyframes fade { from { opacity: 0; } }
+  .menu::backdrop { background: var(--forest); }
+  .menu__top { display: flex; justify-content: space-between; align-items: center; padding: 16px clamp(16px, 3vw, 40px); }
+  .menu__close { width: 48px; height: 48px; border-radius: 50%; border: 1px solid rgb(255 255 255 / .25); background: none; color: var(--mist); cursor: pointer; display: grid; place-items: center; }
+  .menu__close :global(svg) { width: 22px; height: 22px; }
+  .menu__grid { flex: 1; display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 40px; padding: clamp(24px, 5vw, 64px) clamp(16px, 3vw, 40px); align-content: start; }
+  .menu .meta { color: var(--sage); }
+  .menu ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .menu__col:first-child a { font: 300 clamp(1.6rem, 2.6vw, 2.3rem)/1.25 var(--font-head); }
+  .menu__col a { color: var(--mist); text-decoration: none; display: inline-flex; align-items: baseline; gap: 10px; font-size: 1.05rem; padding: 4px 0; }
+  .menu__col a:hover, .menu__col a[aria-current] { color: #fff; font-style: italic; }
+  .menu__col small { font: 500 .78rem var(--font-body); color: var(--sage); font-style: normal; }
+  .menu__foot { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 20px clamp(16px, 3vw, 40px) calc(28px + env(safe-area-inset-bottom)); border-top: 1px solid rgb(255 255 255 / .12); }
+  .menu__lang { color: var(--mist); margin-left: auto; font-weight: 600; }
+  @media (max-width: 900px) { .menu__grid { grid-template-columns: 1fr 1fr; gap: 32px 20px; } .menu__col:first-child { grid-column: 1 / -1; } }
+
+  /* ---------- Pie de página ---------- */
+  .ftr { background: var(--forest); color: #c9cfbf; padding: clamp(72px, 10vw, 120px) 0 28px; }
+  .ftr a { color: var(--mist); text-decoration: none; }
+  .ftr a:hover { text-decoration: underline; }
+  .ftr .meta { color: var(--sage); }
+  .ftr__claim { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 24px; padding-bottom: clamp(48px, 7vw, 80px); border-bottom: 1px solid rgb(255 255 255 / .12); }
+  .ftr__big { font: 300 clamp(2.4rem, 6vw, 5rem)/1 var(--font-head); color: var(--mist); margin: 0; }
+  .ftr__big em { font-style: italic; }
+  .ftr__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; padding: 48px 0; }
+  .ftr ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; font-size: .95rem; }
+  .ftr li a { display: inline-block; padding: 9px 0; }
+  .ftr__bottom { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; font-size: .82rem; border-top: 1px solid rgb(255 255 255 / .12); padding-top: 22px; }
+  .visits { display: inline-flex; align-items: center; gap: 8px; color: var(--mist); }
+  .visits :global(svg) { width: 17px; height: 17px; color: var(--sage); }
+  .visits strong { font-variant-numeric: tabular-nums; }
+  @media (max-width: 900px) { .ftr__grid { grid-template-columns: 1fr 1fr; } }
+
+  /* ---------- WhatsApp y barra móvil ---------- */
+  .wa-float { position: fixed; right: 22px; bottom: 22px; z-index: 40; width: 56px; height: 56px; border-radius: 50%; background: #1f7a45; color: #fff; display: grid; place-items: center; box-shadow: 0 10px 30px -8px rgb(0 0 0 / .4); transition: transform .3s var(--ease); }
+  .wa-float:hover { transform: scale(1.06); }
+  .wa-float :global(svg) { width: 28px; height: 28px; }
+  .mbar { display: none; }
+  @media (max-width: 760px) {
+    .wa-float { display: none; }
+    .mbar { display: grid; grid-template-columns: 52px 1fr; gap: 10px; position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 45; padding: 8px; border-radius: 999px; background: rgb(22 34 27 / .92); backdrop-filter: blur(12px); box-shadow: 0 14px 40px -12px rgb(0 0 0 / .5); }
+    .mbar__wa { display: grid; place-items: center; height: 48px; border-radius: 50%; background: #1f7a45; color: #fff; }
+    .mbar__wa :global(svg) { width: 24px; height: 24px; }
+    .mbar .btn { min-height: 48px; }
+    :global(body) { padding-bottom: 84px; }
+  }
+
+  /* ---------- Hoja de reserva ---------- */
+  .sheet { border: 0; padding: 32px 28px 26px; border-radius: var(--radius-lg); width: min(100% - 24px, 540px); max-height: calc(100dvh - 24px); overflow: auto; background: var(--paper); box-shadow: 0 40px 100px -30px rgb(0 0 0 / .6); }
+  .sheet[open] { animation: fade .3s var(--ease); }
+  .sheet::backdrop { background: rgb(22 34 27 / .6); backdrop-filter: blur(3px); }
+  .sheet__close { position: absolute; top: 14px; right: 14px; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--forest); cursor: pointer; display: grid; place-items: center; }
+  .sheet__close :global(svg) { width: 20px; height: 20px; }
+  @media (max-width: 760px) {
+    .sheet[open] { margin: auto 0 0; width: 100%; max-width: 100%; border-radius: 18px 18px 0 0; padding-bottom: calc(24px + env(safe-area-inset-bottom)); animation: up .3s var(--ease); }
+    @keyframes up { from { transform: translateY(40px); opacity: 0; } }
+  }
+</style>

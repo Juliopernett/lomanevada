@@ -1,0 +1,120 @@
+---
+// Página de cabaña: galería, ficha que se lee de un vistazo, amenidades, políticas y reserva siempre visible.
+import PageHead from '../components/PageHead.astro';
+import Gallery from '../components/Gallery.astro';
+import BookingForm from '../components/BookingForm.astro';
+import Policies from '../components/Policies.astro';
+import Icon from '../components/Icon.astro';
+import { Image } from 'astro:assets';
+import { img } from '../lib/img';
+import { COMMON_STAY, STAYS, UI, UX, href, type Lang, type Stay } from '../data/site';
+
+interface Props { lang: Lang; stay: Stay }
+const { lang, stay } = Astro.props;
+const es = lang === 'es';
+const t = stay.title[lang];
+const money = (n: number) => `$${n.toLocaleString('es-CO')}`;
+const privateBath = stay.bath === 'private';
+
+// Descripción breve armada solo con datos reales de la ficha.
+const summary = es
+  ? `${stay.key === 'camping' ? 'Tienda de camping' : 'Cabaña de madera'} de ${stay.area} m² para ${stay.capacity} personas, con ${stay.doubleBeds} cama doble${stay.bunks ? ` y ${stay.bunks} ${stay.bunks > 1 ? 'literas' : 'litera'}` : ''}, baño ${privateBath ? 'privado' : 'compartido'} y vista a ${stay.view.es.toLowerCase()}.`
+  : `A ${stay.area} m² ${stay.key === 'camping' ? 'camping tent' : 'wooden cabin'} for ${stay.capacity}, with ${stay.doubleBeds} double bed${stay.bunks ? ` and ${stay.bunks} bunk bed${stay.bunks > 1 ? 's' : ''}` : ''}, a ${privateBath ? 'private' : 'shared'} bathroom and ${stay.view.en.toLowerCase()} views.`;
+
+const specs = [
+  [es ? 'Capacidad' : 'Sleeps', `${stay.capacity} ${UI.people[lang]}`],
+  [es ? 'Área' : 'Size', `${stay.area} m²`],
+  [es ? 'Camas' : 'Beds', `${stay.doubleBeds} ${es ? 'doble' : 'double'}${stay.bunks ? ` + ${stay.bunks} ${es ? (stay.bunks > 1 ? 'literas' : 'litera') : stay.bunks > 1 ? 'bunks' : 'bunk'}` : ''}`],
+  [es ? 'Baño' : 'Bathroom', privateBath ? (es ? 'Privado' : 'Private') : es ? 'Compartido' : 'Shared'],
+  [es ? 'Vista' : 'View', stay.view[lang]],
+  ['Check-in / out', `${COMMON_STAY.checkIn} / ${COMMON_STAY.checkOut}`],
+];
+
+const amenities = es
+  ? ['Agua caliente en la ducha', 'Toalla y jabón sin costo', `Café orgánico gratis (${COMMON_STAY.coffee.es.toLowerCase()})`, 'Agua de manantial gratis', 'Wifi en zonas comunes', 'Piscina, restaurante, bar, fogata y malla-red', 'Senderismo, avistamiento de aves y caminata ecológica con guía']
+  : ['Hot water in the shower', 'Towel and soap at no cost', `Free organic coffee (${COMMON_STAY.coffee.en.toLowerCase()})`, 'Free spring water', 'Wifi in common areas', 'Pool, restaurant, bar, bonfire and mesh-net', 'Hiking, bird watching and guided ecological walk'];
+
+const others = STAYS.filter((s) => s.key !== stay.key);
+---
+<PageHead lang={lang} title={t} parent={{ label: UI.stays[lang], href: `${href(lang, '')}#cabanas` }}>
+  <p class="stay__meta">{stay.capacity} {UI.people[lang]} · {stay.area} m² · {stay.view[lang]}{stay.priceFrom && <> · {UX.from[lang]} {money(stay.priceFrom)} / {UX.perNight[lang]}</>}</p>
+</PageHead>
+
+<div class="wrap">
+  <Gallery images={stay.images} alt={t} lang={lang} variant="feature" />
+</div>
+
+<section class="section stay">
+  <div class="wrap stay__in">
+    <div>
+      <p class="stay__lead">{summary}</p>
+
+      <dl class="stay__specs">
+        {specs.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
+      </dl>
+
+      <h2 class="stay__h">{UX.amenities[lang]}</h2>
+      <ul class="stay__amen">
+        {amenities.map((a) => <li><Icon name="check" />{a}</li>)}
+      </ul>
+
+      <Policies lang={lang} compact />
+    </div>
+
+    <aside class="stay__book">
+      <BookingForm lang={lang} stay={stay.key} variant="card" />
+    </aside>
+  </div>
+</section>
+
+<section class="section section--alt">
+  <div class="wrap">
+    <div class="more__head">
+      <h2>{es ? <>Otras <em>estancias</em></> : <>Other <em>stays</em></>}</h2>
+      <a class="link" href={`${href(lang, '')}#cabanas`}>{es ? 'Ver todas' : 'View all'} <Icon name="arrow" /></a>
+    </div>
+    <div class="rail more__rail">
+      {others.map((s) => (
+        <a class="more__card" href={href(lang, s.slug[lang])}>
+          <Image src={img(s.images[0])} alt="" widths={[400, 640]} sizes="(max-width: 700px) 70vw, 300px" loading="lazy" />
+          <span class="meta">{s.capacity} {UI.people[lang]} · {s.area} m²</span>
+          <h3>{s.title[lang]}</h3>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .stay__meta { font: 600 .78rem/1.4 var(--font-body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0; }
+  .stay { padding-top: clamp(48px, 6vw, 80px); }
+  .stay__in { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: clamp(32px, 6vw, 88px); align-items: start; }
+  .stay__lead { font: 300 clamp(1.3rem, 2.2vw, 1.75rem)/1.45 var(--font-head); color: var(--forest); max-width: 36ch; }
+  .stay__specs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 28px; margin: 36px 0 56px; }
+  .stay__specs div { border-top: 1px solid var(--line); padding: 14px 0; }
+  .stay__specs dt { font: 600 .75rem/1.3 var(--font-body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .stay__specs dd { margin: 4px 0 0; font: 400 1.15rem/1.3 var(--font-head); color: var(--forest); }
+  .stay__h { font-size: clamp(1.6rem, 3vw, 2.2rem); }
+  .stay__amen { list-style: none; padding: 0; margin: 0 0 56px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 28px; }
+  .stay__amen li { display: flex; gap: 10px; align-items: flex-start; color: var(--ink); }
+  .stay__amen :global(svg) { width: 20px; height: 20px; flex: none; color: var(--wood); margin-top: 3px; }
+  .stay__book { position: sticky; top: 100px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 28px; }
+  .more__head { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 28px; }
+  .more__head h2 { margin: 0; }
+  .more__rail { gap: 24px; }
+  .more__card { width: 300px; color: inherit; text-decoration: none; }
+  .more__card :global(img) { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--radius); margin-bottom: 14px; }
+  .more__card .meta { margin-bottom: .4rem; color: var(--muted); }
+  .more__card h3 { margin: 0; }
+
+  @media (max-width: 960px) {
+    .stay__in { grid-template-columns: minmax(0, 1fr); }
+    .stay__book { position: static; }
+  }
+  @media (max-width: 640px) {
+    .stay__specs { grid-template-columns: 1fr 1fr; }
+    .stay__amen { grid-template-columns: 1fr; }
+    .more__rail { margin-inline: -16px; padding-inline: 16px; }
+    .more__card { width: 70vw; }
+  }
+</style>

@@ -1,0 +1,71 @@
+---
+// Formulario de contacto.
+// - Si existe la variable PUBLIC_WEB3FORMS_KEY (gratis en web3forms.com), el mensaje llega al correo.
+// - Si no, el formulario abre WhatsApp con el mensaje ya escrito.
+import Icon from './Icon.astro';
+import { SITE, UI, PAGES, href, type Lang } from '../data/site';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const key = import.meta.env.PUBLIC_WEB3FORMS_KEY ?? '';
+const f = UI.form;
+---
+<form class="cf" data-key={key} data-wa={SITE.phone.replace('+', '')} data-ok={f.ok[lang]} data-err={f.error[lang]} data-sending={f.sending[lang]}>
+  <input type="hidden" name="subject" value={lang === 'es' ? 'Nuevo mensaje desde lomanevada.com' : 'New message from lomanevada.com'} />
+  <input type="hidden" name="from_name" value="Loma Nevada web" />
+  <input type="checkbox" name="botcheck" class="sr-only" tabindex="-1" autocomplete="off" aria-hidden="true" aria-label="No marcar" />
+  <div class="cf__row">
+    <label>{f.name[lang]} *<input name="name" required autocomplete="given-name" /></label>
+    <label>{f.last[lang]}<input name="last_name" autocomplete="family-name" /></label>
+  </div>
+  <div class="cf__row">
+    <label>{f.phone[lang]}<input name="phone" type="tel" autocomplete="tel" /></label>
+    <label>{f.email[lang]} *<input name="email" type="email" required autocomplete="email" /></label>
+  </div>
+  <label>{f.message[lang]} *<textarea name="message" rows="5" required></textarea></label>
+  <p class="cf__legal">{f.consent[lang]} <a href={href(lang, PAGES.privacy[lang])}>{UI.privacy[lang]}</a>.</p>
+  <button class="btn" type="submit">{key ? f.send[lang] : <><Icon name="whatsapp" />{f.send[lang]}</>}</button>
+  <p class="cf__status" role="status" aria-live="polite"></p>
+</form>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>('form.cf').forEach((form) => {
+    const status = form.querySelector<HTMLElement>('.cf__status')!;
+    const btn = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = new FormData(form);
+      const key = form.dataset.key;
+      if (!key) {
+        const text = `Hola, soy ${data.get('name')} ${data.get('last_name') || ''}.\n${data.get('message')}\n\nCorreo: ${data.get('email')}${data.get('phone') ? `\nTel: ${data.get('phone')}` : ''}`;
+        window.open(`https://wa.me/${form.dataset.wa}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+        return;
+      }
+      data.append('access_key', key);
+      btn.disabled = true;
+      status.textContent = form.dataset.sending!;
+      try {
+        const res = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: data });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+        form.reset();
+        status.textContent = form.dataset.ok!;
+      } catch {
+        status.textContent = form.dataset.err!;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
+</script>
+
+<style>
+  .cf { position: relative; display: grid; gap: 14px; background: var(--white); padding: clamp(20px, 4vw, 32px); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .cf__row { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
+  .cf label { display: grid; gap: 6px; font-size: .9rem; font-weight: 600; color: var(--brown); }
+  .cf input:not(.sr-only), .cf textarea { font: inherit; font-weight: 400; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--cream); color: var(--ink); width: 100%; }
+  .cf input:focus, .cf textarea:focus { outline: none; border-color: var(--green); background: #fff; }
+  .cf__legal { font-size: .82rem; color: var(--muted); margin: 0; }
+  .cf button { justify-self: start; }
+  .cf__status { margin: 0; font-weight: 600; color: var(--green-dark); min-height: 1.4em; }
+</style>

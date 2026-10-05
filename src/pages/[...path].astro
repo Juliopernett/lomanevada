@@ -1,0 +1,112 @@
+---
+// Genera todas las páginas en español (/es/...) e inglés (/...), con las mismas URLs del sitio anterior.
+import Layout from '../layouts/Layout.astro';
+import Home from '../views/Home.astro';
+import StayView from '../views/StayView.astro';
+import AmbientView from '../views/AmbientView.astro';
+import ServiceView from '../views/ServiceView.astro';
+import InfoView, { type InfoKind } from '../views/InfoView.astro';
+import { STAYS, AMBIENTS, SERVICES, PAGES, SITE, UI, ABOUT, type Lang, type T, type Stay, type Ambient, type Service } from '../data/site';
+
+type Entry = {
+  slug: T;
+  title: T;
+  description: T;
+  image?: string;
+  view: { type: 'home' } | { type: 'stay'; stay: Stay } | { type: 'ambient'; ambient?: Ambient } | { type: 'service'; service: Service } | { type: 'info'; kind: InfoKind };
+};
+
+export function getStaticPaths() {
+  const both = (es: string, en: string): T => ({ es, en });
+  const entries: Entry[] = [
+    {
+      slug: PAGES.home, title: both(SITE.name, SITE.name),
+      description: both(
+        'Hotel ecológico en Minca, Sierra Nevada de Santa Marta, a 1.500 m de altura con vista al mar Caribe. Cabañas en madera, piscina, restaurante y senderismo. Reserva directa por WhatsApp.',
+        'Eco hotel in Minca, Sierra Nevada de Santa Marta, 1,500 m high overlooking the Caribbean Sea. Wooden cabins, pool, restaurant and hiking. Book directly on WhatsApp.',
+      ),
+      view: { type: 'home' },
+    },
+    ...STAYS.map((s): Entry => ({
+      slug: s.slug, title: s.title, image: s.images[0],
+      description: both(
+        `${s.title.es} en Loma Nevada, Minca: ${s.area} m², capacidad para ${s.capacity} personas, baño ${s.bath === 'private' ? 'privado' : 'compartido'}, vista a ${s.view.es.toLowerCase()}. Café gratis y acceso a piscina, restaurante y bar.`,
+        `${s.title.en} at Loma Nevada, Minca: ${s.area} m², sleeps ${s.capacity}, ${s.bath} bathroom, ${s.view.en.toLowerCase()} view. Free coffee and access to pool, restaurant and bar.`,
+      ),
+      view: { type: 'stay', stay: s },
+    })),
+    {
+      slug: PAGES.ambients, title: UI.ambients, image: 'ambientes/piscina-1.jpg',
+      description: both('Conoce los ambientes de Loma Nevada en Minca: restaurante, bar, piscina, gimnasio, malla-hamaca y fogata con vista al mar.', 'Discover the spaces at Loma Nevada in Minca: restaurant, bar, pool, gym, mesh-hammock and bonfire with sea views.'),
+      view: { type: 'ambient' },
+    },
+    ...AMBIENTS.map((a): Entry => ({
+      slug: a.slug, title: a.title, image: a.images[0],
+      description: { es: a.text.es.slice(0, 155), en: a.text.en.slice(0, 155) },
+      view: { type: 'ambient', ambient: a },
+    })),
+    ...SERVICES.map((s): Entry => ({
+      slug: s.slug, title: s.title, image: s.thumb,
+      description: s.intro,
+      view: { type: 'service', service: s },
+    })),
+    {
+      slug: PAGES.faq, title: UI.faq,
+      description: both('Preguntas frecuentes sobre Loma Nevada: cómo llegar, reservas, niños, mascotas, comida, actividades y más.', 'Frequently asked questions about Loma Nevada: how to get here, bookings, children, pets, food, activities and more.'),
+      view: { type: 'info', kind: 'faq' },
+    },
+    {
+      slug: PAGES.privacy, title: UI.privacy,
+      description: both('Política de privacidad y manejo de datos personales de Loma Nevada Minca Hotel.', 'Privacy policy and handling of personal data at Loma Nevada Minca Hotel.'),
+      view: { type: 'info', kind: 'privacy' },
+    },
+    {
+      slug: PAGES.contact, title: UI.contact,
+      description: both('Contacta a Loma Nevada Minca Hotel por WhatsApp +57 312 796 0054 o correo contacto@lomanevada.com.', 'Contact Loma Nevada Minca Hotel on WhatsApp +57 312 796 0054 or email contacto@lomanevada.com.'),
+      view: { type: 'info', kind: 'contact' },
+    },
+    {
+      slug: PAGES.about, title: UI.aboutUs,
+      description: { es: ABOUT.es.slice(0, 155), en: ABOUT.en.slice(0, 155) },
+      view: { type: 'info', kind: 'about' },
+    },
+    {
+      slug: PAGES.conduct, title: UI.conduct,
+      description: both('Código de conducta de Loma Nevada Minca Hotel.', 'Code of conduct of Loma Nevada Minca Hotel.'),
+      view: { type: 'info', kind: 'conduct' },
+    },
+    {
+      slug: PAGES.quality, title: UI.quality,
+      description: both('Política de gestión de calidad de Loma Nevada Minca Hotel.', 'Quality management policy of Loma Nevada Minca Hotel.'),
+      view: { type: 'info', kind: 'quality' },
+    },
+  ];
+
+  const path = (lang: Lang, slug: string) => (lang === 'es' ? (slug ? `es/${slug}` : 'es') : slug || undefined);
+  const url = (lang: Lang, slug: string) => (lang === 'es' ? (slug ? `/es/${slug}/` : '/es/') : slug ? `/${slug}/` : '/');
+
+  return entries.flatMap((e) =>
+    (['es', 'en'] as const).map((lang) => {
+      const other = lang === 'es' ? 'en' : 'es';
+      return {
+        params: { path: path(lang, e.slug[lang]) },
+        props: { lang, entry: e, alt: url(other, e.slug[other]) },
+      };
+    }),
+  );
+}
+
+const { lang, entry, alt } = Astro.props as { lang: Lang; entry: Entry; alt: string };
+const v = entry.view;
+const waText =
+  v.type === 'stay'
+    ? lang === 'es' ? `Hola, quiero reservar la ${v.stay.title.es}` : `Hi, I would like to book the ${v.stay.title.en}`
+    : undefined;
+---
+<Layout lang={lang} title={entry.title[lang]} description={entry.description[lang]} alt={alt} image={entry.image} waText={waText} stay={v.type === 'stay' ? v.stay.key : undefined} overlay={v.type === 'home'}>
+  {v.type === 'home' && <Home lang={lang} />}
+  {v.type === 'stay' && <StayView lang={lang} stay={v.stay} />}
+  {v.type === 'ambient' && <AmbientView lang={lang} ambient={v.ambient} />}
+  {v.type === 'service' && <ServiceView lang={lang} service={v.service} />}
+  {v.type === 'info' && <InfoView lang={lang} kind={v.kind} />}
+</Layout>

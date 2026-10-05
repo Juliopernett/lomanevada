@@ -1,0 +1,126 @@
+---
+// Tarjetas de estancias, ambientes o servicios.
+// Las estancias muestran precio "desde" (si existe), filtros opcionales y dos acciones: ver y reservar.
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import { img } from '../lib/img';
+import { STAYS, AMBIENTS, SERVICES, UI, UX, BOOK, href, type Lang } from '../data/site';
+
+interface Props { lang: Lang; kind: 'stays' | 'ambients' | 'services'; exclude?: string; filters?: boolean }
+const { lang, kind, exclude, filters = false } = Astro.props;
+
+const bath = { private: { es: 'Baño privado', en: 'Private bathroom' }, shared: { es: 'Baño compartido', en: 'Shared bathroom' } };
+const money = (n: number) => `$${n.toLocaleString('es-CO')}`;
+
+const stays = STAYS.filter((s) => s.key !== exclude).map((s) => ({
+  key: s.key, title: s.title[lang], href: href(lang, s.slug[lang]), image: s.images[0],
+  meta: [`${s.capacity} ${UI.people[lang]}`, `${s.area} m²`, bath[s.bath][lang]],
+  price: s.priceFrom,
+  tags: [
+    ...(s.capacity <= 2 ? [BOOK.tagCouples[lang]] : []),
+    ...(s.capacity >= 6 ? [BOOK.tagFamily[lang]] : []),
+    ...(s.view.es !== 'Montaña' ? [BOOK.tagSea[lang]] : []),
+  ],
+  groups: [s.capacity <= 2 ? 'couples' : 'family', s.bath === 'private' ? 'private' : 'budget'].join(' '),
+}));
+
+const links =
+  kind === 'ambients'
+    ? AMBIENTS.filter((a) => a.key !== exclude).map((a) => ({ title: a.title[lang], href: href(lang, a.slug[lang]), image: a.thumb, text: '' }))
+    : SERVICES.filter((s) => s.key !== exclude).map((s) => ({ title: s.title[lang], href: href(lang, s.slug[lang]), image: s.thumb, text: s.intro[lang] }));
+
+const chips = [
+  { key: 'all', label: BOOK.filterAll[lang] },
+  { key: 'couples', label: BOOK.filterCouples[lang] },
+  { key: 'family', label: BOOK.filterFamily[lang] },
+  { key: 'private', label: BOOK.filterPrivate[lang] },
+  { key: 'budget', label: BOOK.filterBudget[lang] },
+];
+---
+<div class="cards" data-cards>
+  {kind === 'stays' && filters && (
+    <div class="chips" role="group" aria-label={BOOK.stay[lang]}>
+      {chips.map((c, i) => <button type="button" class="chip" data-filter={c.key} aria-pressed={i === 0 ? 'true' : 'false'}>{c.label}</button>)}
+    </div>
+  )}
+
+  {kind === 'stays' ? (
+    <div class="grid grid--4">
+      {stays.map((c) => (
+        <article class="card stay reveal" data-groups={c.groups}>
+          <a class="card__media" href={c.href} tabindex="-1" aria-hidden="true">
+            <Image src={img(c.image)} alt="" widths={[400, 640]} sizes="(max-width: 700px) 100vw, 300px" loading="lazy" />
+            {c.tags.length > 0 && <div class="card__tags">{c.tags.map((t) => <span>{t}</span>)}</div>}
+          </a>
+          <div class="card__body">
+            <h3><a href={c.href}>{c.title}</a></h3>
+            <div class="card__meta">{c.meta.map((m) => <span>{m}</span>)}</div>
+            {c.price && <p class="card__price"><span>{UX.from[lang]}</span> <strong>{money(c.price)}</strong> / {UX.perNight[lang]}</p>}
+            <div class="card__actions">
+              <a class="btn btn--ghost btn--sm" href={c.href}>{UX.viewCabin[lang]}</a>
+              <button type="button" class="btn btn--sm" data-open-booking data-stay={c.key}>{c.price ? UX.reserveNow[lang] : UX.seePrices[lang]}</button>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  ) : (
+    <div class:list={['grid', kind === 'services' ? 'grid--3' : 'grid--4']}>
+      {links.map((c) => (
+        <a class="card reveal" href={c.href}>
+          <div class="card__media">
+            <Image src={img(c.image)} alt="" widths={[400, 640]} sizes="(max-width: 700px) 100vw, 380px" loading="lazy" />
+          </div>
+          <div class="card__body">
+            <h3>{c.title}</h3>
+            {c.text && <p class="card__text">{c.text}</p>}
+            <span class="card__more">{UI.seeMore[lang]} <Icon name="arrow" /></span>
+          </div>
+        </a>
+      ))}
+    </div>
+  )}
+</div>
+
+{kind === 'stays' && filters && (
+  <script>
+    document.querySelectorAll<HTMLElement>('[data-cards]').forEach((root) => {
+      const chips = [...root.querySelectorAll<HTMLButtonElement>('.chip')];
+      const cards = [...root.querySelectorAll<HTMLElement>('.card')];
+      chips.forEach((chip) =>
+        chip.addEventListener('click', () => {
+          const f = chip.dataset.filter!;
+          chips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+          cards.forEach((card) => { card.hidden = f !== 'all' && !card.dataset.groups!.split(' ').includes(f); });
+        }),
+      );
+    });
+  </script>
+)}
+
+<style>
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 26px; }
+  .chip { font: 500 .92rem/1 var(--font-body); padding: 11px 16px; min-height: 44px; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; transition: all .2s; }
+  .chip:hover { border-color: var(--green); }
+  .chip[aria-pressed='true'] { background: var(--green); border-color: var(--green); color: #fff; }
+  .card[hidden] { display: none; }
+  .card__media { display: block; position: relative; overflow: hidden; }
+  .card__media :global(img) { transition: transform .5s; }
+  .card:hover .card__media :global(img) { transform: scale(1.05); }
+  .card__tags { position: absolute; left: 12px; top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .card__tags span { background: rgb(255 255 255 / .94); color: var(--brown); font-size: .75rem; font-weight: 600; padding: 5px 10px; border-radius: 999px; }
+  .card__text { color: var(--muted); font-size: .95rem; margin: .2em 0 .6em; }
+  .card__more { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; color: var(--green-dark); font-weight: 600; font-size: .92rem; }
+  .card__more :global(svg) { width: 16px; height: 16px; transition: transform .2s; }
+  .card:hover .card__more :global(svg) { transform: translateX(3px); }
+
+  /* Tarjeta de estancia */
+  .stay:hover { transform: none; }
+  .stay .card__body { display: flex; flex-direction: column; flex: 1; }
+  .stay h3 a { color: inherit; text-decoration: none; }
+  .stay h3 a:hover { color: var(--green-dark); }
+  .card__price { margin: 10px 0 0; color: var(--muted); font-size: .9rem; }
+  .card__price strong { color: var(--brown); font-size: 1.15rem; }
+  .card__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; padding-top: 16px; }
+  .btn--sm { padding: .7em .9em; font-size: .9rem; min-height: 44px; justify-content: center; }
+</style>

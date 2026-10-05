@@ -1,0 +1,128 @@
+---
+import { Image } from 'astro:assets';
+import PageHead from '../components/PageHead.astro';
+import Sections from '../components/Sections.astro';
+import Gallery from '../components/Gallery.astro';
+import Icon from '../components/Icon.astro';
+import { img } from '../lib/img';
+import { FAQ } from '../data/faq';
+import { ABOUT, PRIVACY, SITE, UI, type Lang } from '../data/site';
+
+export type InfoKind = 'faq' | 'privacy' | 'contact' | 'about' | 'conduct' | 'quality';
+interface Props { lang: Lang; kind: InfoKind }
+const { lang, kind } = Astro.props;
+const es = lang === 'es';
+const about = { label: UI.about[lang] };
+
+const faqSchema = kind === 'faq' && {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQ[lang].flatMap((g) => g.items).map((i) => ({
+    '@type': 'Question', name: i.q, acceptedAnswer: { '@type': 'Answer', text: i.a.replace(/<[^>]+>/g, '') },
+  })),
+};
+---
+{kind === 'faq' && (
+  <>
+    <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+    <PageHead lang={lang} title={UI.faq[lang]} parent={about} lead={es ? 'Todo lo que necesitas saber antes de tu visita.' : 'Everything you need to know before your visit.'} />
+    <section class="section" style="padding-top:24px">
+      <div class="wrap faq">
+        <div>
+          {FAQ[lang].map((g) => (
+            <div class="faq__group">
+              <h2>{g.group}</h2>
+              {g.items.map((i) => (
+                <details class="faq__item">
+                  <summary>{i.q}</summary>
+                  <div set:html={i.a} />
+                </details>
+              ))}
+            </div>
+          ))}
+        </div>
+        <aside class="faq__qr">
+          <Image src={img('servicios/que-hacer-qr.png')} alt={es ? 'Código QR: qué hacer y a dónde ir' : 'QR code: what to do and where to go'} width={220} />
+          <p>{es ? 'Descubre qué hacer y a dónde ir escaneando el código QR.' : 'Discover what to do and where to go by scanning the QR code.'}</p>
+        </aside>
+      </div>
+    </section>
+    <Sections lang={lang} show={['contact']} />
+  </>
+)}
+
+{kind === 'privacy' && (
+  <>
+    <PageHead lang={lang} title={UI.privacy[lang]} parent={about} />
+    <section class="section" style="padding-top:16px">
+      <div class="wrap prose">
+        <h2 style="margin-top:0">{PRIVACY[lang].title}</h2>
+        {PRIVACY[lang].sections.map((s) => (
+          <>
+            {s.h && <h2>{s.h}</h2>}
+            {s.p.map((p) => <p>{p}</p>)}
+          </>
+        ))}
+        <h2>{es ? 'Documentos' : 'Documents'}</h2>
+        <ul class="docs">
+          {PRIVACY[lang].docs.map((d) => <li><a href={d.file} target="_blank" rel="noopener">{d.label} (PDF)</a></li>)}
+        </ul>
+      </div>
+    </section>
+  </>
+)}
+
+{kind === 'contact' && (
+  <>
+    <PageHead lang={lang} title={UI.contact[lang]} lead={es ? 'Somos el único hotel en la Sierra Nevada de Santa Marta a 1.500 metros de altura con vista al mar.' : 'The only hotel in the Sierra Nevada de Santa Marta at 1,500 meters high overlooking the sea.'}>
+      <div class="social">
+        <a class="btn btn--ghost" href={SITE.instagram} target="_blank" rel="noopener"><Icon name="instagram" />Instagram</a>
+        <a class="btn btn--ghost" href={SITE.facebook} target="_blank" rel="noopener"><Icon name="facebook" />Facebook</a>
+        <a class="btn btn--ghost" href={`tel:${SITE.landline.replace(/\s/g, '')}`}><Icon name="phone" />{SITE.landline}</a>
+      </div>
+    </PageHead>
+    <Sections lang={lang} show={['contact', 'nature']} />
+  </>
+)}
+
+{kind === 'about' && (
+  <>
+    <PageHead lang={lang} title={UI.aboutUs[lang]} parent={about} />
+    <section class="section" style="padding-top:16px">
+      <div class="wrap prose">
+        <p class="lead">{ABOUT[lang]}</p>
+        <a class="btn btn--ghost" href={SITE.booking} target="_blank" rel="noopener">Booking.com <Icon name="arrow" /></a>
+      </div>
+    </section>
+    <Sections lang={lang} show={['stays', 'nature']} />
+  </>
+)}
+
+{(kind === 'conduct' || kind === 'quality') && (
+  <>
+    <PageHead lang={lang} title={kind === 'conduct' ? UI.conduct[lang] : UI.quality[lang]} parent={about} />
+    <section class="section" style="padding-top:16px">
+      <div class="wrap" style="max-width:760px">
+        <Gallery images={[kind === 'conduct' ? 'docs/codigo-conducta.jpg' : 'docs/politica-calidad.jpg']} alt={kind === 'conduct' ? UI.conduct[lang] : UI.quality[lang]} lang={lang} />
+      </div>
+    </section>
+  </>
+)}
+
+<style>
+  .faq { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 40px; align-items: start; }
+  @media (max-width: 860px) { .faq { grid-template-columns: minmax(0, 1fr); } .faq__qr { display: none; } }
+  .faq__group { margin-bottom: 36px; }
+  .faq__group h2 { font-size: 1.4rem; }
+  .faq__item { background: var(--white); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 10px; }
+  .faq__item summary { cursor: pointer; padding: 16px 48px 16px 18px; font-weight: 600; list-style: none; position: relative; color: var(--brown); }
+  .faq__item summary::-webkit-details-marker { display: none; }
+  .faq__item summary::after { content: '+'; position: absolute; right: 18px; top: 50%; transform: translateY(-50%); font-size: 1.4rem; color: var(--green); font-weight: 400; }
+  .faq__item[open] summary::after { content: '–'; }
+  .faq__item > div { padding: 0 18px 18px; color: var(--muted); }
+  .faq__qr { position: sticky; top: 90px; background: var(--white); border-radius: var(--radius); padding: 20px; text-align: center; box-shadow: var(--shadow); }
+  .faq__qr :global(img) { margin: 0 auto 10px; width: 180px; }
+  .faq__qr p { font-size: .92rem; margin: 0; }
+  .docs { display: grid; gap: 8px; }
+  .social { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+</style>

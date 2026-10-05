@@ -1,0 +1,101 @@
+---
+// Portada: un recorrido narrativo de arriba abajo, con la reserva siempre a mano.
+import { Image } from 'astro:assets';
+import Hero from '../components/Hero.astro';
+import StayShowcase from '../components/StayShowcase.astro';
+import Experiences from '../components/Experiences.astro';
+import Life from '../components/Life.astro';
+import Policies from '../components/Policies.astro';
+import Location from '../components/Location.astro';
+import Icon from '../components/Icon.astro';
+import { img } from '../lib/img';
+import { PAGES, SITE, UI, UX, href, waLink, type Lang } from '../data/site';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const es = lang === 'es';
+const facts = es
+  ? [['1.500 m', 'sobre el nivel del mar'], ['18 °C', 'temperatura promedio'], ['360°', 'de vista al mar y la sierra'], ['2018', 'año de apertura']]
+  : [['1,500 m', 'above sea level'], ['18 °C', 'average temperature'], ['360°', 'sea and mountain views'], ['2018', 'year we opened']];
+---
+<Hero lang={lang} />
+
+<!-- Manifiesto -->
+<section class="section intro" id="hotel" aria-labelledby="intro-title">
+  <div class="wrap intro__in">
+    <div class="intro__txt">
+      <span class="eyebrow reveal">{es ? 'El hotel' : 'The hotel'}</span>
+      <h2 id="intro-title" class="reveal">{es ? <>Donde la Sierra Nevada <em>se encuentra con el Caribe</em></> : <>Where the Sierra Nevada <em>meets the Caribbean</em></>}</h2>
+      <p class="intro__lead reveal">{es
+        ? 'Cabañas de madera a 1.500 metros de altura, en la finca La Victoria, sobre Minca. Un lugar para descansar, caminar entre la selva y ver el mar desde arriba.'
+        : 'Wooden cabins 1,500 meters high, on Finca La Victoria, above Minca. A place to rest, walk through the forest and see the sea from above.'}</p>
+      <p class="reveal">{es
+        ? 'Todas las cabañas se construyeron con pino reforestado traído de Rionegro, Antioquia: no se cortó un solo árbol de la región.'
+        : 'Every cabin was built with reforested pine brought from Rionegro, Antioquia: not a single tree in the region was cut.'}</p>
+      <dl class="intro__facts reveal">
+        {facts.map(([n, l]) => <div><dt>{n}</dt><dd>{l}</dd></div>)}
+      </dl>
+    </div>
+    <div class="intro__imgs">
+      <div class="intro__a reveal-img">
+        <Image src={img('hero/hero-9.jpg')} alt={es ? 'Vista aérea de las cabañas de Loma Nevada en la montaña' : 'Aerial view of the Loma Nevada cabins on the mountain'} widths={[480, 800]} sizes="(max-width: 900px) 70vw, 30vw" loading="lazy" />
+      </div>
+      <div class="intro__b reveal-img" data-parallax="0.1">
+        <Image src={img('naturaleza/n8.jpg')} alt={es ? 'Terraza de madera al amanecer' : 'Wooden terrace at sunrise'} widths={[400, 640]} sizes="(max-width: 900px) 50vw, 20vw" loading="lazy" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<StayShowcase lang={lang} />
+
+<Experiences lang={lang} />
+
+<Life lang={lang} />
+
+<!-- Reserva directa -->
+<section class="direct" aria-labelledby="direct-title">
+  <Image src={img('hero/hero-6.jpg')} alt="" widths={[768, 1200]} sizes="100vw" loading="lazy" class="direct__bg" data-parallax="0.05" />
+  <div class="wrap direct__in">
+    <h2 id="direct-title" class="reveal">{es ? <>Reserva directo. <em>Mejor precio.</em></> : <>Book direct. <em>Best price.</em></>}</h2>
+    <p class="reveal">{es ? 'Disponibilidad y tarifas en tiempo real, sin comisiones de intermediarios.' : 'Real-time availability and rates, with no third-party fees.'}</p>
+    <div class="direct__cta reveal">
+      <button type="button" class="btn" data-open-booking data-stay="">{UX.reserveNow[lang]}</button>
+      <a class="link" href={waLink(UI.waGreeting[lang])} target="_blank" rel="noopener"><Icon name="whatsapp" /> {es ? 'Pregúntanos por WhatsApp' : 'Ask us on WhatsApp'}</a>
+    </div>
+  </div>
+</section>
+
+<Policies lang={lang} />
+
+<Location lang={lang} />
+
+<style>
+  .intro__in { display: grid; grid-template-columns: 1.05fr 1fr; gap: clamp(40px, 7vw, 120px); align-items: center; }
+  .intro__lead { font: 300 clamp(1.25rem, 2vw, 1.6rem)/1.45 var(--font-head); color: var(--forest); }
+  .intro__txt > p:not(.intro__lead) { color: var(--muted); max-width: 52ch; }
+  .intro__facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 40px 0 0; padding-top: 24px; border-top: 1px solid var(--line); }
+  .intro__facts dt { font: 300 clamp(1.5rem, 2.6vw, 2.2rem)/1 var(--font-head); color: var(--forest); }
+  .intro__facts dd { margin: 8px 0 0; font-size: .82rem; color: var(--muted); line-height: 1.35; }
+  .intro__imgs { position: relative; padding: 0 0 18% 0; }
+  .intro__a { width: 78%; margin-left: auto; overflow: hidden; border-radius: var(--radius); }
+  .intro__a :global(img) { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+  .intro__b { position: absolute; left: 0; bottom: 0; width: 46%; overflow: hidden; border-radius: var(--radius); box-shadow: 0 30px 60px -24px rgb(22 34 27 / .5); border: 8px solid var(--mist); }
+  .intro__b :global(img) { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; }
+
+  .direct { position: relative; isolation: isolate; overflow: hidden; color: #fff; padding: clamp(120px, 18vw, 220px) 0; text-align: center; }
+  .direct :global(.direct__bg) { position: absolute; inset: -10% 0; width: 100%; height: 120%; object-fit: cover; z-index: -2; }
+  .direct::after { content: ''; position: absolute; inset: 0; z-index: -1; background: rgb(10 16 12 / .55); }
+  .direct__in { text-shadow: 0 1px 2px rgb(0 0 0 / .35), 0 2px 18px rgb(0 0 0 / .35); }
+  .direct__in .btn { text-shadow: none; }
+  .direct h2 { color: #fff; font-weight: 300; font-size: clamp(2.4rem, 6vw, 5rem); }
+  .direct p { font-size: 1.1rem; opacity: .92; }
+  .direct__cta { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 16px 32px; margin-top: 2rem; }
+  .direct .link { color: #fff; }
+
+  @media (max-width: 900px) {
+    .intro__in { grid-template-columns: 1fr; }
+    .intro__facts { grid-template-columns: repeat(2, 1fr); row-gap: 24px; }
+    .intro__imgs { max-width: 520px; }
+  }
+</style>
