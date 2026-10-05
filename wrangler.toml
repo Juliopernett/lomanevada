@@ -1,11 +1,20 @@
-# Configuración de Cloudflare Pages
+# Cloudflare Workers con archivos estáticos (sitio Astro en ./dist)
 name = "lomanevada"
-pages_build_output_dir = "dist"
+main = "worker/index.ts"
 compatibility_date = "2026-10-01"
 
-# Base de datos del contador de visitas.
-# Crear con: npx wrangler d1 create lomanevada-visitas  → pegar aquí el database_id que devuelve.
-[[d1_databases]]
-binding = "DB"
-database_name = "lomanevada-visitas"
-database_id = "PENDIENTE"
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "404-page"
+# Solo el contador pasa por el Worker; el resto se sirve directo desde ./dist
+run_worker_first = ["/api/*"]
+
+# Base de datos del contador de visitas (Cloudflare D1, gratis).
+# 1. Crearla: en el panel, Storage & Databases > D1 > Create, nombre "lomanevada-visitas"
+#    (o por terminal: npx wrangler d1 create lomanevada-visitas)
+# 2. Quitar los # de estas líneas y pegar el database_id que entrega Cloudflare.
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "lomanevada-visitas"
+# database_id = "PEGAR-AQUI"
