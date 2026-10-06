@@ -1,4 +1,7 @@
-# Redirecciones de páginas del sitio anterior (formato Cloudflare Pages)
+# Redirecciones de páginas del sitio anterior
+# La portada en español ahora vive en la raíz
+/es/  /  301
+/es  /  301
 /es/senderos/  /es/senderismo/  301
 /es/senderos  /es/senderismo/  301
 /walking-trails/  /trekking/  301

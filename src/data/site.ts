@@ -461,8 +461,9 @@ export const PAGES = {
 } satisfies Record<string, T>;
 
 export function href(lang: Lang, slug: string) {
-  if (lang === 'es') return slug ? `/es/${slug}/` : '/es/';
-  return slug ? `/${slug}/` : '/';
+  // Portada: español en la raíz (/), inglés en /en/. Páginas internas: /es/... y /... (URLs del sitio anterior).
+  if (lang === 'es') return slug ? `/es/${slug}/` : '/';
+  return slug ? `/${slug}/` : '/en/';
 }
 
 export const ABOUT = {

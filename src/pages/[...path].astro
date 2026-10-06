@@ -6,7 +6,7 @@ import StayView from '../views/StayView.astro';
 import AmbientView from '../views/AmbientView.astro';
 import ServiceView from '../views/ServiceView.astro';
 import InfoView, { type InfoKind } from '../views/InfoView.astro';
-import { STAYS, AMBIENTS, SERVICES, PAGES, SITE, UI, ABOUT, type Lang, type T, type Stay, type Ambient, type Service } from '../data/site';
+import { STAYS, AMBIENTS, SERVICES, PAGES, SITE, UI, ABOUT, href, type Lang, type T, type Stay, type Ambient, type Service } from '../data/site';
 
 type Entry = {
   slug: T;
@@ -82,8 +82,8 @@ export function getStaticPaths() {
     },
   ];
 
-  const path = (lang: Lang, slug: string) => (lang === 'es' ? (slug ? `es/${slug}` : 'es') : slug || undefined);
-  const url = (lang: Lang, slug: string) => (lang === 'es' ? (slug ? `/es/${slug}/` : '/es/') : slug ? `/${slug}/` : '/');
+  const path = (lang: Lang, slug: string) => (lang === 'es' ? (slug ? `es/${slug}` : undefined) : slug || 'en');
+  const url = (lang: Lang, slug: string) => href(lang, slug);
 
   return entries.flatMap((e) =>
     (['es', 'en'] as const).map((lang) => {
