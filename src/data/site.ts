@@ -18,6 +18,7 @@ export const SITE = {
     country: 'CO',
   },
   mapsUrl: 'https://maps.app.goo.gl/mYwiSKwuz8nwrme49',
+  mapEmbed: 'https://www.google.com/maps?q=Loma+Nevada+Minca+Hotel,+El+Campano,+Minca&output=embed',
   instagram: 'https://www.instagram.com/lomanevada/',
   facebook: 'https://www.facebook.com/lomanevada/',
   booking: 'http://www.booking.com/Share-yeLd99z',
@@ -608,7 +609,6 @@ export const BOOK = {
   tagSea: { es: 'Vista al mar', en: 'Sea view' },
   weatherNow: { es: 'ahora en Loma Nevada', en: 'now at Loma Nevada' },
   experiences: { es: 'Experiencias', en: 'Experiences' },
-  mapLoad: { es: 'Ver mapa', en: 'Show map' },
   visits: { es: 'visitas', en: 'visits' },
 };
 
