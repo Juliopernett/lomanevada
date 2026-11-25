@@ -11,10 +11,7 @@ not_found_handling = "404-page"
 run_worker_first = ["/api/*"]
 
 # Base de datos del contador de visitas (Cloudflare D1, gratis).
-# 1. Crearla: en el panel, Storage & Databases > D1 > Create, nombre "lomanevada-visitas"
-#    (o por terminal: npx wrangler d1 create lomanevada-visitas)
-# 2. Quitar los # de estas líneas y pegar el database_id que entrega Cloudflare.
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "lomanevada-visitas"
-# database_id = "PEGAR-AQUI"
+[[d1_databases]]
+binding = "DB"
+database_name = "lomanevada-visitas"
+database_id = "8f46a5ca-11b2-4cbe-9859-085aee4887f6"

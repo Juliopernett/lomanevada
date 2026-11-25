@@ -1,6 +1,8 @@
 # Loma Nevada Minca Hotel — sitio web
 
-Sitio estático (Astro) que reemplaza el WordPress de lomanevada.com. Bilingüe: inglés en `/` y español en `/es/`, con **las mismas URLs del sitio anterior** para no perder posicionamiento en Google.
+Sitio estático (Astro) que reemplaza el WordPress de lomanevada.com, publicado como Cloudflare Worker con archivos estáticos.
+
+Es bilingüe. La portada en español está en `/` y la de inglés en `/en/`. Las páginas internas conservan **las URLs del sitio anterior** (español en `/es/…`, inglés en `/…`) para no perder posicionamiento en Google.
 
 ## Comandos
 
@@ -38,29 +40,29 @@ Cualquier motor que acepte esos parámetros (por ejemplo, uno propio en el futur
 
 ## Contador de visitas
 
-Se muestra en el pie de página: `visitsBase` (35.000, en `src/data/site.ts`) más las visitas reales, una por sesión. Funciona con Cloudflare Pages Functions (`functions/api/visits.ts`) y una base de datos D1 gratuita:
+Se muestra en el pie de página: `visitsBase` (35.000, en `src/data/site.ts`) más las visitas reales, una por sesión. Lo atiende el Worker (`worker/index.ts`, ruta `/api/visits`) con la base de datos D1 gratuita `lomanevada-visitas`, configurada en `wrangler.toml`. La tabla se crea sola en la primera visita. Si la base no está disponible en la configuración, responde 0 y el pie muestra solo la cifra base.
 
-```bash
-npx wrangler d1 create lomanevada-visitas   # copiar el database_id en wrangler.toml
-```
-
-Para probar todo en local, incluido el contador: `npm run build` y luego `npx wrangler pages dev dist`.
+Para probar todo en local, incluido el contador: `npm run build` y luego `npx wrangler dev`.
 
 ## Formulario de contacto
 
 Sin configuración, el formulario abre WhatsApp con el mensaje ya escrito.
-Para que llegue al correo, crea una clave gratis en https://web3forms.com (con contacto@lomanevada.com) y agrégala como variable de entorno en Vercel:
+Para que llegue al correo, crea una clave gratis en https://web3forms.com (con contacto@lomanevada.com) y agrégala en Cloudflare como **variable del build** del Worker (*Workers & Pages* → `lomanevada` → *Settings* → *Build* → *Variables and secrets*):
 
 ```
 PUBLIC_WEB3FORMS_KEY=tu-clave
 ```
 
-## Publicar en Cloudflare Pages (gratis, SSL incluido)
+Se lee al compilar, así que hay que lanzar un build nuevo después de agregarla.
 
-1. Sube esta carpeta a un repositorio de GitHub.
-2. En Cloudflare → *Workers & Pages* → *Create* → *Pages* → conecta el repositorio. Comando de build: `npm run build`; carpeta: `dist`.
-3. Crea la base D1 (ver arriba) y vincúlala al proyecto con el nombre `DB`.
-4. Revisa el sitio en la dirección temporal `*.pages.dev`.
-5. Agrega `lomanevada.com` como dominio propio. Cloudflare pedirá cambiar los nameservers en GoDaddy. Antes, verifica que en Cloudflare estén copiados los registros del correo de Microsoft 365: MX `lomanevada-com.mail.protection.outlook.com`, los TXT (SPF y verificación de Microsoft) y los CNAME `autodiscover` y `email`.
+## Publicación
+
+El Worker `lomanevada` está conectado a este repositorio con Workers Builds: **cada push a `main` compila y publica el sitio** en https://lomanevada.com. La configuración está en `wrangler.toml`.
+
+## Dominio y DNS
+
+- El dominio está registrado en GoDaddy (vence el 2027-10-03) y el DNS se administra en Cloudflare.
+- `www` redirige a `lomanevada.com`.
+- El correo sigue en Microsoft 365. No borrar ni modificar sus registros: MX `lomanevada-com.mail.protection.outlook.com`, los TXT (SPF y verificación de Microsoft) y los CNAME `autodiscover` y `email`.
 
 Las redirecciones de páginas viejas están en `public/_redirects` y los encabezados de caché y seguridad en `public/_headers`.
