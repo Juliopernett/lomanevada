@@ -2,6 +2,7 @@
 // Formulario de contacto.
 // - Si existe la variable PUBLIC_WEB3FORMS_KEY (gratis en web3forms.com), el mensaje llega al correo.
 // - Si no, el formulario abre WhatsApp con el mensaje ya escrito.
+// - Si el envío al correo falla (cuota, servicio caído, sin red), aparece un botón para mandarlo por WhatsApp.
 import Icon from './Icon.astro';
 import { SITE, UI, PAGES, href, type Lang } from '../data/site';
 
@@ -10,7 +11,7 @@ const { lang } = Astro.props;
 const key = import.meta.env.PUBLIC_WEB3FORMS_KEY ?? '';
 const f = UI.form;
 ---
-<form class="cf" data-key={key} data-wa={SITE.phone.replace('+', '')} data-ok={f.ok[lang]} data-err={f.error[lang]} data-sending={f.sending[lang]}>
+<form class="cf" data-lang={lang} data-key={key} data-wa={SITE.phone.replace('+', '')} data-ok={f.ok[lang]} data-err={f.error[lang]} data-sending={f.sending[lang]}>
   <input type="hidden" name="subject" value={lang === 'es' ? 'Nuevo mensaje desde lomanevada.com' : 'New message from lomanevada.com'} />
   <input type="hidden" name="from_name" value="Loma Nevada web" />
   <input type="checkbox" name="botcheck" class="sr-only" tabindex="-1" autocomplete="off" aria-hidden="true" aria-label="No marcar" />
@@ -26,22 +27,31 @@ const f = UI.form;
   <p class="cf__legal">{f.consent[lang]} <a href={href(lang, PAGES.privacy[lang])}>{UI.privacy[lang]}</a>.</p>
   <button class="btn" type="submit">{key ? f.send[lang] : <><Icon name="whatsapp" />{f.send[lang]}</>}</button>
   <p class="cf__status" role="status" aria-live="polite"></p>
+  <a class="btn btn--wa cf__wa" target="_blank" rel="noopener" hidden><Icon name="whatsapp" />{f.waSend[lang]}</a>
 </form>
 
 <script>
   document.querySelectorAll<HTMLFormElement>('form.cf').forEach((form) => {
     const status = form.querySelector<HTMLElement>('.cf__status')!;
     const btn = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    const wa = form.querySelector<HTMLAnchorElement>('.cf__wa')!;
+    const waUrl = (data: FormData) => {
+      const en = form.dataset.lang === 'en';
+      const phone = data.get('phone') ? `\n${en ? 'Phone' : 'Tel'}: ${data.get('phone')}` : '';
+      const text = `${en ? 'Hi, I am' : 'Hola, soy'} ${[data.get('name'), data.get('last_name')].filter(Boolean).join(' ')}.\n${data.get('message')}\n\n${en ? 'Email' : 'Correo'}: ${data.get('email')}${phone}`;
+      return `https://wa.me/${form.dataset.wa}?text=${encodeURIComponent(text)}`;
+    };
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const data = new FormData(form);
       const key = form.dataset.key;
       if (!key) {
-        const text = `Hola, soy ${data.get('name')} ${data.get('last_name') || ''}.\n${data.get('message')}\n\nCorreo: ${data.get('email')}${data.get('phone') ? `\nTel: ${data.get('phone')}` : ''}`;
-        window.open(`https://wa.me/${form.dataset.wa}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+        window.open(waUrl(data), '_blank', 'noopener');
         return;
       }
+      const fallback = waUrl(data);
       data.append('access_key', key);
+      wa.hidden = true;
       btn.disabled = true;
       status.textContent = form.dataset.sending!;
       try {
@@ -52,6 +62,8 @@ const f = UI.form;
         status.textContent = form.dataset.ok!;
       } catch {
         status.textContent = form.dataset.err!;
+        wa.href = fallback;
+        wa.hidden = false;
       } finally {
         btn.disabled = false;
       }
@@ -66,6 +78,7 @@ const f = UI.form;
   .cf input:not(.sr-only), .cf textarea { font: inherit; font-weight: 400; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--cream); color: var(--ink); width: 100%; }
   .cf input:focus, .cf textarea:focus { outline: none; border-color: var(--green); background: #fff; }
   .cf__legal { font-size: .82rem; color: var(--muted); margin: 0; }
-  .cf button { justify-self: start; }
+  .cf button, .cf__wa { justify-self: start; }
+  .cf__wa[hidden] { display: none; }
   .cf__status { margin: 0; font-weight: 600; color: var(--green-dark); min-height: 1.4em; }
 </style>

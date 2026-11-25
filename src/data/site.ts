@@ -90,6 +90,7 @@ export const UI = {
       es: 'No se pudo enviar. Escríbenos por WhatsApp, por favor.',
       en: 'It could not be sent. Please write to us on WhatsApp.',
     },
+    waSend: { es: 'Enviar por WhatsApp', en: 'Send on WhatsApp' },
     consent: {
       es: 'Al enviar aceptas nuestra política de manejo de datos personales.',
       en: 'By sending you accept our personal data policy.',
