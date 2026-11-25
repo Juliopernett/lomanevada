@@ -338,6 +338,8 @@ const schema = {
   .wa-float { position: fixed; right: 22px; bottom: 22px; z-index: 40; width: 56px; height: 56px; border-radius: 50%; background: #1f7a45; color: #fff; display: grid; place-items: center; box-shadow: 0 10px 30px -8px rgb(0 0 0 / .4); transition: transform .3s var(--ease); }
   .wa-float:hover { transform: scale(1.06); }
   .wa-float :global(svg) { width: 28px; height: 28px; }
+  /* Espacio al final del pie para que el botón flotante (22px + 56px) no tape la última línea. */
+  @media (min-width: 761px) { .ftr { padding-bottom: 96px; } }
   .mbar { display: none; }
   @media (max-width: 760px) {
     .wa-float { display: none; }
