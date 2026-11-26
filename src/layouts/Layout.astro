@@ -49,6 +49,7 @@ const menu = [
   {
     label: es ? 'Información' : 'Information',
     items: [
+      { label: UI.guides[lang], href: href(lang, PAGES.guides[lang]), note: '' },
       { label: UI.faq[lang], href: href(lang, PAGES.faq[lang]), note: '' },
       { label: UI.contact[lang], href: href(lang, PAGES.contact[lang]), note: '' },
       { label: UI.privacy[lang], href: href(lang, PAGES.privacy[lang]), note: '' },
@@ -181,6 +182,7 @@ const schema = {
           <div>
             <span class="meta">{es ? 'Información' : 'Information'}</span>
             <ul>
+              <li><a href={href(lang, PAGES.guides[lang])}>{UI.guides[lang]}</a></li>
               <li><a href={href(lang, PAGES.faq[lang])}>{UI.faq[lang]}</a></li>
               <li><a href={href(lang, PAGES.privacy[lang])}>{UI.privacy[lang]}</a></li>
               <li><a href={SITE.instagram} target="_blank" rel="noopener">Instagram</a> · <a href={SITE.facebook} target="_blank" rel="noopener">Facebook</a></li>

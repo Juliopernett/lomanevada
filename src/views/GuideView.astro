@@ -1,0 +1,78 @@
+---
+// Una guía para viajeros, o el listado de guías si no se indica cuál.
+import { Image, getImage } from 'astro:assets';
+import PageHead from '../components/PageHead.astro';
+import Sections from '../components/Sections.astro';
+import Icon from '../components/Icon.astro';
+import { img } from '../lib/img';
+import { GUIDES, type Guide } from '../data/guides';
+import { SITE, UI, UX, PAGES, href, waLink, type Lang } from '../data/site';
+
+interface Props { lang: Lang; guide?: Guide }
+const { lang, guide } = Astro.props;
+const es = lang === 'es';
+const index = href(lang, PAGES.guides[lang]);
+const schema = guide && {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: guide.title[lang],
+  description: guide.description[lang],
+  inLanguage: lang,
+  dateModified: guide.updated,
+  image: new URL((await getImage({ src: img(guide.image), width: 1200, format: 'jpg' })).src, SITE.url).href,
+  mainEntityOfPage: new URL(href(lang, guide.slug[lang]), SITE.url).href,
+  author: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+};
+const list = GUIDES.filter((g) => g !== guide);
+---
+{guide ? (
+  <>
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+    <PageHead lang={lang} title={guide.title[lang]} parent={{ label: UI.guides[lang], href: index }} />
+    <article class="section" style="padding-top:24px">
+      <div class="wrap guide">
+        <Image class="guide__img" src={img(guide.image)} alt={`${guide.title[lang]} – Loma Nevada, Minca`} widths={[480, 800, 1200]} sizes="(max-width: 800px) 100vw, 760px" loading="eager" />
+        <div class="prose" set:html={guide.body[lang]} />
+        <div class="guide__cta">
+          <button type="button" class="btn" data-open-booking>{UX.reserveNow[lang]}</button>
+          <a class="btn btn--wa" href={waLink(UI.waGreeting[lang])} target="_blank" rel="noopener"><Icon name="whatsapp" />{es ? 'Pregunta por WhatsApp' : 'Ask on WhatsApp'}</a>
+        </div>
+      </div>
+    </article>
+  </>
+) : (
+  <PageHead lang={lang} title={UI.guides[lang]} lead={es ? 'Información práctica para planear tu viaje a Minca y la Sierra Nevada.' : 'Practical information to plan your trip to Minca and the Sierra Nevada.'} />
+)}
+
+<section class:list={['section', guide && 'section--alt']} style={guide ? undefined : 'padding-top:24px'}>
+  <div class="wrap">
+    {guide && <h2>{es ? 'Más guías' : 'More guides'}</h2>}
+    <div class="grid grid--3" style="margin-top:24px">
+      {list.map((g) => (
+        <a class="card reveal" href={href(lang, g.slug[lang])}>
+          <div class="card__media">
+            <Image src={img(g.image)} alt={`${g.title[lang]} – Loma Nevada, Minca`} widths={[400, 640]} sizes="(max-width: 700px) 100vw, 380px" loading="lazy" />
+          </div>
+          <div class="card__body">
+            <h3>{g.title[lang]}</h3>
+            <p class="card__text">{g.description[lang]}</p>
+            <span class="card__more">{UI.seeMore[lang]} <Icon name="arrow" /></span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+<Sections lang={lang} show={['stays']} />
+
+<style>
+  .guide { max-width: 792px; }
+  .guide :global(.guide__img) { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius); margin-bottom: 32px; }
+  .guide__cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+  .card__media { display: block; overflow: hidden; }
+  .card__media :global(img) { aspect-ratio: 4 / 3; transition: transform .5s; }
+  .card:hover .card__media :global(img) { transform: scale(1.05); }
+  .card__text { color: var(--muted); font-size: .95rem; margin: .2em 0 .6em; }
+  .card__more { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; color: var(--green-dark); font-weight: 600; font-size: .92rem; }
+  .card__more :global(svg) { width: 16px; height: 16px; }
+</style>

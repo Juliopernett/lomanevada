@@ -74,6 +74,7 @@ export const UI = {
   quality: { es: 'Política de gestión de calidad', en: 'Quality management policy' },
   aboutUs: { es: 'Quiénes somos', en: 'About us' },
   gallery: { es: 'Galería', en: 'Gallery' },
+  guides: { es: 'Guías de viaje', en: 'Travel guides' },
   close: { es: 'Cerrar', en: 'Close' },
   prev: { es: 'Anterior', en: 'Previous' },
   next: { es: 'Siguiente', en: 'Next' },
@@ -462,6 +463,7 @@ export const PAGES = {
   about: { es: 'quienes-somos-2', en: 'quienes-somos' },
   conduct: { es: 'codigo-de-conducta', en: 'code-of-conduct' },
   quality: { es: 'politica-de-gestion-de-calidad', en: 'quality-politics' },
+  guides: { es: 'guias', en: 'guides' },
 } satisfies Record<string, T>;
 
 export function href(lang: Lang, slug: string) {

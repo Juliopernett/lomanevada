@@ -6,6 +6,8 @@ import StayView from '../views/StayView.astro';
 import AmbientView from '../views/AmbientView.astro';
 import ServiceView from '../views/ServiceView.astro';
 import InfoView, { type InfoKind } from '../views/InfoView.astro';
+import GuideView from '../views/GuideView.astro';
+import { GUIDES, type Guide } from '../data/guides';
 import { STAYS, AMBIENTS, SERVICES, PAGES, SITE, UI, ABOUT, href, type Lang, type T, type Stay, type Ambient, type Service } from '../data/site';
 
 type Entry = {
@@ -14,7 +16,7 @@ type Entry = {
   seoTitle?: T;
   description: T;
   image?: string;
-  view: { type: 'home' } | { type: 'stay'; stay: Stay } | { type: 'ambient'; ambient?: Ambient } | { type: 'service'; service: Service } | { type: 'info'; kind: InfoKind };
+  view: { type: 'home' } | { type: 'stay'; stay: Stay } | { type: 'ambient'; ambient?: Ambient } | { type: 'service'; service: Service } | { type: 'info'; kind: InfoKind } | { type: 'guide'; guide?: Guide };
 };
 
 export function getStaticPaths() {
@@ -56,6 +58,16 @@ export function getStaticPaths() {
       seoTitle: s.key === 'transporte' ? both('Transporte de Santa Marta y Minca | Loma Nevada', 'Transport from Santa Marta to Minca | Loma Nevada') : inMinca(s.title),
       description: s.intro,
       view: { type: 'service', service: s },
+    })),
+    {
+      slug: PAGES.guides, title: UI.guides, image: 'hero/hero-7.jpg',
+      seoTitle: both('Guías de viaje a Minca | Loma Nevada', 'Minca Travel Guides | Loma Nevada'),
+      description: both('Guías para planear tu viaje a Minca: cómo llegar desde Santa Marta, qué hacer y dónde dormir en la Sierra Nevada.', 'Guides to plan your trip to Minca: getting there from Santa Marta, things to do and where to stay in the Sierra Nevada.'),
+      view: { type: 'guide' },
+    },
+    ...GUIDES.map((g): Entry => ({
+      slug: g.slug, title: g.title, seoTitle: g.seoTitle, description: g.description, image: g.image,
+      view: { type: 'guide', guide: g },
     })),
     {
       slug: PAGES.faq, title: UI.faq,
@@ -116,4 +128,5 @@ const waText =
   {v.type === 'ambient' && <AmbientView lang={lang} ambient={v.ambient} />}
   {v.type === 'service' && <ServiceView lang={lang} service={v.service} />}
   {v.type === 'info' && <InfoView lang={lang} kind={v.kind} />}
+  {v.type === 'guide' && <GuideView lang={lang} guide={v.guide} />}
 </Layout>

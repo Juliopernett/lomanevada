@@ -19,6 +19,7 @@ npm run preview    # ver dist/ en local
 |---|---|
 | Textos, precios, cabañas, ambientes, servicios, teléfono, redes | `src/data/site.ts` |
 | Preguntas frecuentes | `src/data/faq.ts` |
+| Guías de viaje (entradas) | `src/data/guides.ts` |
 | Fotos | `src/assets/img/…` (se optimizan solas a WebP al compilar) |
 | PDFs de privacidad | `public/docs/` |
 | Colores y tipografía | `src/styles/global.css` |
