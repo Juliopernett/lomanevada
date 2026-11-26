@@ -9,6 +9,8 @@ import { img } from '../lib/img';
 interface Props {
   lang: Lang;
   title: string;
+  /** Título completo para buscadores; si falta, se usa "title | nombre del hotel". */
+  seoTitle?: string;
   description: string;
   /** Ruta de esta misma página en el otro idioma. */
   alt: string;
@@ -20,14 +22,14 @@ interface Props {
   overlay?: boolean;
 }
 
-const { lang, title, description, alt, image = 'hero/hero-1.jpg', waText, stay, overlay = false } = Astro.props;
+const { lang, title, seoTitle, description, alt, image = 'hero/hero-1.jpg', waText, stay, overlay = false } = Astro.props;
 const other: Lang = lang === 'es' ? 'en' : 'es';
 const canonical = new URL(Astro.url.pathname, SITE.url).href;
 const altUrl = new URL(alt, SITE.url).href;
 const esUrl = lang === 'es' ? canonical : altUrl;
 const enUrl = lang === 'en' ? canonical : altUrl;
 const og = await getImage({ src: img(image), width: 1200, format: 'jpg' });
-const fullTitle = title === SITE.name ? title : `${title} | ${SITE.name}`;
+const fullTitle = seoTitle ?? (title === SITE.name ? title : `${title} | ${SITE.name}`);
 const wa = waLink(waText ?? UI.waGreeting[lang]);
 const logo = await getImage({ src: img('brand/logo.png'), format: 'png' });
 // Precarga de la foto del hero en la portada (mejora el LCP).
@@ -58,6 +60,9 @@ const schema = {
   '@context': 'https://schema.org',
   '@type': 'Hotel',
   name: SITE.name,
+  description: lang === 'es'
+    ? 'Hotel de montaña en Minca, Sierra Nevada de Santa Marta, a 1.500 m de altura con vista al mar Caribe.'
+    : 'Mountain hotel in Minca, Sierra Nevada de Santa Marta, 1,500 m high with Caribbean Sea views.',
   url: SITE.url,
   image: new URL(og.src, SITE.url).href,
   telephone: SITE.phone,
@@ -87,7 +92,7 @@ const schema = {
     <link rel="canonical" href={canonical} />
     <link rel="alternate" hreflang="es" href={esUrl} />
     <link rel="alternate" hreflang="en" href={enUrl} />
-    <link rel="alternate" hreflang="x-default" href={esUrl} />
+    <link rel="alternate" hreflang="x-default" href={enUrl} />
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#16221b" />

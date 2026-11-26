@@ -11,6 +11,7 @@ import { STAYS, AMBIENTS, SERVICES, PAGES, SITE, UI, ABOUT, href, type Lang, typ
 type Entry = {
   slug: T;
   title: T;
+  seoTitle?: T;
   description: T;
   image?: string;
   view: { type: 'home' } | { type: 'stay'; stay: Stay } | { type: 'ambient'; ambient?: Ambient } | { type: 'service'; service: Service } | { type: 'info'; kind: InfoKind };
@@ -18,17 +19,22 @@ type Entry = {
 
 export function getStaticPaths() {
   const both = (es: string, en: string): T => ({ es, en });
+  // Título para buscadores con el lugar: "Piscina en Minca | Loma Nevada".
+  const inMinca = (t: T): T => both(`${t.es} en Minca | Loma Nevada`, `${t.en} in Minca | Loma Nevada`);
+  // Recorta sin partir palabras.
+  const clip = (text: string, max = 155) => (text.length <= max ? text : `${text.slice(0, max - 1).replace(/\s+\S*$/, '').replace(/[,;:.]$/, '')}…`);
   const entries: Entry[] = [
     {
       slug: PAGES.home, title: both(SITE.name, SITE.name),
+      seoTitle: both('Hotel en Minca con vista al mar | Loma Nevada', 'Hotel in Minca with Sea Views | Loma Nevada'),
       description: both(
-        'Hotel ecológico en Minca, Sierra Nevada de Santa Marta, a 1.500 m de altura con vista al mar Caribe. Cabañas en madera, piscina, restaurante y senderismo. Reserva directa por WhatsApp.',
-        'Eco hotel in Minca, Sierra Nevada de Santa Marta, 1,500 m high overlooking the Caribbean Sea. Wooden cabins, pool, restaurant and hiking. Book directly on WhatsApp.',
+        'Hotel de montaña en Minca, cerca de Santa Marta, a 1.500 m y con vista al mar Caribe. Cabañas de madera, piscina de manantial y aves.',
+        'Mountain hotel in Minca, Colombia, 1,500 m up near Santa Marta with Caribbean views. Wooden cabins, spring-water pool and birding.',
       ),
       view: { type: 'home' },
     },
     ...STAYS.map((s): Entry => ({
-      slug: s.slug, title: s.title, image: s.images[0],
+      slug: s.slug, title: s.title, seoTitle: inMinca(s.title), image: s.images[0],
       description: both(
         `${s.title.es} en Loma Nevada, Minca: ${s.area} m², capacidad para ${s.capacity} personas, baño ${s.bath === 'private' ? 'privado' : 'compartido'}, vista a ${s.view.es.toLowerCase()}. Café gratis y acceso a piscina, restaurante y bar.`,
         `${s.title.en} at Loma Nevada, Minca: ${s.area} m², sleeps ${s.capacity}, ${s.bath} bathroom, ${s.view.en.toLowerCase()} view. Free coffee and access to pool, restaurant and bar.`,
@@ -36,17 +42,18 @@ export function getStaticPaths() {
       view: { type: 'stay', stay: s },
     })),
     {
-      slug: PAGES.ambients, title: UI.ambients, image: 'ambientes/piscina-1.jpg',
+      slug: PAGES.ambients, title: UI.ambients, seoTitle: inMinca(UI.ambients), image: 'ambientes/piscina-1.jpg',
       description: both('Conoce los ambientes de Loma Nevada en Minca: restaurante, bar, piscina, gimnasio, malla-hamaca y fogata con vista al mar.', 'Discover the spaces at Loma Nevada in Minca: restaurant, bar, pool, gym, mesh-hammock and bonfire with sea views.'),
       view: { type: 'ambient' },
     },
     ...AMBIENTS.map((a): Entry => ({
-      slug: a.slug, title: a.title, image: a.images[0],
-      description: { es: a.text.es.slice(0, 155), en: a.text.en.slice(0, 155) },
+      slug: a.slug, title: a.title, seoTitle: inMinca(a.title), image: a.images[0],
+      description: { es: clip(a.text.es), en: clip(a.text.en) },
       view: { type: 'ambient', ambient: a },
     })),
     ...SERVICES.map((s): Entry => ({
       slug: s.slug, title: s.title, image: s.thumb,
+      seoTitle: s.key === 'transporte' ? both('Transporte de Santa Marta y Minca | Loma Nevada', 'Transport from Santa Marta to Minca | Loma Nevada') : inMinca(s.title),
       description: s.intro,
       view: { type: 'service', service: s },
     })),
@@ -67,7 +74,7 @@ export function getStaticPaths() {
     },
     {
       slug: PAGES.about, title: UI.aboutUs,
-      description: { es: ABOUT.es.slice(0, 155), en: ABOUT.en.slice(0, 155) },
+      description: { es: clip(ABOUT.es), en: clip(ABOUT.en) },
       view: { type: 'info', kind: 'about' },
     },
     {
@@ -103,7 +110,7 @@ const waText =
     ? lang === 'es' ? `Hola, quiero reservar la ${v.stay.title.es}` : `Hi, I would like to book the ${v.stay.title.en}`
     : undefined;
 ---
-<Layout lang={lang} title={entry.title[lang]} description={entry.description[lang]} alt={alt} image={entry.image} waText={waText} stay={v.type === 'stay' ? v.stay.key : undefined} overlay={v.type === 'home'}>
+<Layout lang={lang} title={entry.title[lang]} seoTitle={entry.seoTitle?.[lang]} description={entry.description[lang]} alt={alt} image={entry.image} waText={waText} stay={v.type === 'stay' ? v.stay.key : undefined} overlay={v.type === 'home'}>
   {v.type === 'home' && <Home lang={lang} />}
   {v.type === 'stay' && <StayView lang={lang} stay={v.stay} />}
   {v.type === 'ambient' && <AmbientView lang={lang} ambient={v.ambient} />}

@@ -22,7 +22,8 @@ export const SITE = {
   instagram: 'https://www.instagram.com/lomanevada/',
   facebook: 'https://www.facebook.com/lomanevada/',
   booking: 'http://www.booking.com/Share-yeLd99z',
-  rating: '4.7',
+  // Calificación de Booking que se muestra en la portada (consultada el 2026-11-26). Actualizar de vez en cuando.
+  rating: { score: { es: '8,8', en: '8.8' }, reviews: 722, url: 'https://www.booking.com/hotel/co/loma-nevada-minca-hostel.html' },
   // Registro Nacional de Turismo del hotel. Al llenarlo aparece en el pie de página.
   rnt: '',
   // Motor de reservas externo. La página solo envía al huésped a esta dirección con
@@ -48,7 +49,8 @@ export const UI = {
     es: 'Reserva directamente con nosotros al mejor precio',
     en: 'Book directly with us at the best price',
   },
-  avgRating: { es: 'Valoración promedio', en: 'Average rating' },
+  ratingOn: { es: 'en Booking', en: 'on Booking' },
+  reviews: { es: 'opiniones', en: 'reviews' },
   bookOne: { es: 'Reserva alguna de nuestras estancias', en: 'Book one of our stays' },
   liveNature: { es: 'Vive la naturaleza en Loma Nevada', en: 'Live nature at Loma Nevada' },
   visitUs: { es: 'Visítanos', en: 'Visit us' },

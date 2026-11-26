@@ -44,7 +44,7 @@ const slides = await Promise.all(
 
   <div class="hero__foot">
     <div class="hero__info">
-      <a href={SITE.mapsUrl} target="_blank" rel="noopener" class="hero__rating"><span class="stars" aria-hidden="true">★★★★★</span> {SITE.rating}/5 · {UI.avgRating[lang]}</a>
+      <a href={SITE.rating.url} target="_blank" rel="noopener" class="hero__rating"><span class="stars" aria-hidden="true">★</span> {SITE.rating.score[lang]}/10 {UI.ratingOn[lang]} · {SITE.rating.reviews} {UI.reviews[lang]}</a>
       <span class="hero__weather" hidden data-weather data-label={BOOK.weatherNow[lang]}></span>
     </div>
     <div class="hero__booking">

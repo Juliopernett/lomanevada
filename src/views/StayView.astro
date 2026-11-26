@@ -76,7 +76,7 @@ const others = STAYS.filter((s) => s.key !== stay.key);
     <div class="rail more__rail">
       {others.map((s) => (
         <a class="more__card" href={href(lang, s.slug[lang])}>
-          <Image src={img(s.images[0])} alt="" widths={[400, 640]} sizes="(max-width: 700px) 70vw, 300px" loading="lazy" />
+          <Image src={img(s.images[0])} alt={`${s.title[lang]} – Loma Nevada, Minca`} widths={[400, 640]} sizes="(max-width: 700px) 70vw, 300px" loading="lazy" />
           <span class="meta">{s.capacity} {UI.people[lang]} · {s.area} m²</span>
           <h3>{s.title[lang]}</h3>
         </a>

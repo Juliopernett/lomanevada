@@ -27,7 +27,7 @@ const rest = STAYS.filter((s) => s !== featured);
 
     <article class="feat">
       <a class="feat__img reveal-img" href={href(lang, featured.slug[lang])} tabindex="-1" aria-hidden="true">
-        <Image src={img(featured.images[0])} alt="" widths={[640, 960, 1280]} sizes="(max-width: 900px) 100vw, 62vw" loading="lazy" />
+        <Image src={img(featured.images[0])} alt={`${featured.title[lang]} – Loma Nevada, Minca`} widths={[640, 960, 1280]} sizes="(max-width: 900px) 100vw, 62vw" loading="lazy" />
       </a>
       <div class="feat__body reveal">
         <span class="meta">{BOOK.tagSea[lang]} · {meta(featured)}</span>
@@ -52,7 +52,7 @@ const rest = STAYS.filter((s) => s !== featured);
       {rest.map((s) => (
         <article class="sc">
           <a class="sc__img" href={href(lang, s.slug[lang])} tabindex="-1" aria-hidden="true">
-            <Image src={img(s.images[0])} alt="" widths={[400, 640]} sizes="(max-width: 700px) 78vw, 340px" loading="lazy" />
+            <Image src={img(s.images[0])} alt={`${s.title[lang]} – Loma Nevada, Minca`} widths={[400, 640]} sizes="(max-width: 700px) 78vw, 340px" loading="lazy" />
             {s.capacity >= 6 && <span class="sc__tag">{BOOK.tagFamily[lang]}</span>}
           </a>
           <span class="meta">{meta(s)}</span>
